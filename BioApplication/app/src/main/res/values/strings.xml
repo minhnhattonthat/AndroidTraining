@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">BioApplication</string>
+    <string name="input_name">Name</string>
+    <string name="input_yob">YoB</string>
+    <string name="input_gender">Gender</string>
+    <string name="bio">Bio</string>
+    <string name="submit">Submit</string>
+    <string name="profile_descript">Profile Picture</string>
+</resources>
