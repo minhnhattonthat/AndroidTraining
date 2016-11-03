@@ -61,7 +61,7 @@
         android:layout_weight="1"
         android:gravity="top"
         android:hint="@string/bio"
-        android:inputType="text|textAutoCorrect"/>
+        android:inputType="text|textAutoCorrect" />
 
     <Button
         android:id="@+id/submit"
