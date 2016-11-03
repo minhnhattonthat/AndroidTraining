@@ -4,8 +4,6 @@ import android.os.Bundle;
 import android.app.Activity;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
-import android.widget.EditText;
-import android.widget.TextView;
 
 public class MainActivity extends Activity {
 
@@ -23,11 +21,5 @@ public class MainActivity extends Activity {
         AutoCompleteTextView genderTextView = (AutoCompleteTextView)
                 findViewById(R.id.gender);
         genderTextView.setAdapter(genderAdapter);
-
-        EditText yobTextView = (EditText)
-                findViewById(R.id.yob);
-        yobTextView.setFilters();
     }
-
-
 }
