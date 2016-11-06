@@ -25,9 +25,12 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ContextMenu.ContextMenuInfo;
+import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.AdapterView.AdapterContextMenuInfo;
+import android.widget.Toast;
+import android.widget.WrapperListAdapter;
 
 public class Notepadv3 extends ListActivity {
     private static final int ACTIVITY_CREATE = 0;
@@ -35,6 +38,8 @@ public class Notepadv3 extends ListActivity {
 
     private static final int INSERT_ID = Menu.FIRST;
     private static final int DELETE_ID = Menu.FIRST + 1;
+    private static final int DUPLICATE_ID = Menu.FIRST + 2;
+
 
     private NotesDbAdapter mDbHelper;
 
@@ -65,6 +70,11 @@ public class Notepadv3 extends ListActivity {
         // Now create a simple cursor adapter and set it to display
         SimpleCursorAdapter notes =
                 new SimpleCursorAdapter(this, R.layout.notes_row, mNotesCursor, from, to);
+
+        String[] from2 = new String[]{NotesDbAdapter.KEY_BODY};
+        int[] to2 = new int[]{R.id.text2};
+        SimpleCursorAdapter notes2 =
+                new SimpleCursorAdapter(this, R.layout.notes_row, mNotesCursor, from2, to2);
         setListAdapter(notes);
     }
 
@@ -91,15 +101,24 @@ public class Notepadv3 extends ListActivity {
                                     ContextMenuInfo menuInfo) {
         super.onCreateContextMenu(menu, v, menuInfo);
         menu.add(0, DELETE_ID, 0, R.string.menu_delete);
+        menu.add(0, DUPLICATE_ID, 0, R.string.menu_duplicate);
     }
 
     @Override
     public boolean onContextItemSelected(MenuItem item) {
+        AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
         switch (item.getItemId()) {
             case DELETE_ID:
-                AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
+
                 mDbHelper.deleteNote(info.id);
                 fillData();
+                Toast.makeText(this, "File deleted", Toast.LENGTH_SHORT).show();
+                return true;
+            case DUPLICATE_ID:
+
+                mDbHelper.duplicateNote(info.id);
+                fillData();
+                Toast.makeText(this, "File duplicated", Toast.LENGTH_SHORT).show();
                 return true;
         }
         return super.onContextItemSelected(item);
@@ -122,5 +141,9 @@ public class Notepadv3 extends ListActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         super.onActivityResult(requestCode, resultCode, intent);
         fillData();
+        if(requestCode == 0)
+            Toast.makeText(this, "File created", Toast.LENGTH_SHORT).show();
+        else if (requestCode == 1)
+            Toast.makeText(this, "File edited", Toast.LENGTH_SHORT).show();
     }
 }

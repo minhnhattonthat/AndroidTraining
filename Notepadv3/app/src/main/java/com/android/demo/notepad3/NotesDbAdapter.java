@@ -22,6 +22,7 @@ import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.os.Bundle;
 import android.util.Log;
 
 /**
@@ -34,11 +35,11 @@ import android.util.Log;
  * of using a collection of inner classes (which is less scalable and not
  * recommended).
  */
-public class NotesDbAdapter {
+class NotesDbAdapter {
 
-    public static final String KEY_TITLE = "title";
-    public static final String KEY_BODY = "body";
-    public static final String KEY_ROWID = "_id";
+    static final String KEY_TITLE = "title";
+    static final String KEY_BODY = "body";
+    static final String KEY_ROWID = "_id";
 
     private static final String TAG = "NotesDbAdapter";
     private DatabaseHelper mDbHelper;
@@ -84,7 +85,7 @@ public class NotesDbAdapter {
      *
      * @param ctx the Context within which to work
      */
-    public NotesDbAdapter(Context ctx) {
+    NotesDbAdapter(Context ctx) {
         this.mCtx = ctx;
     }
 
@@ -97,7 +98,7 @@ public class NotesDbAdapter {
      * initialization call)
      * @throws SQLException if the database could be neither opened or created
      */
-    public NotesDbAdapter open() throws SQLException {
+    NotesDbAdapter open() throws SQLException {
         mDbHelper = new DatabaseHelper(mCtx);
         mDb = mDbHelper.getWritableDatabase();
         return this;
@@ -117,7 +118,7 @@ public class NotesDbAdapter {
      * @param body  the body of the note
      * @return rowId or -1 if failed
      */
-    public long createNote(String title, String body) {
+    long createNote(String title, String body) {
         ContentValues initialValues = new ContentValues();
         initialValues.put(KEY_TITLE, title);
         initialValues.put(KEY_BODY, body);
@@ -131,9 +132,22 @@ public class NotesDbAdapter {
      * @param rowId id of note to delete
      * @return true if deleted, false otherwise
      */
-    public boolean deleteNote(long rowId) {
+    void deleteNote(long rowId) {
 
-        return mDb.delete(DATABASE_TABLE, KEY_ROWID + "=" + rowId, null) > 0;
+        int i = mDb.delete(DATABASE_TABLE, KEY_ROWID + "=" + rowId, null);
+        if (i <= 0) {
+            throw new Error("Error: delete failed");
+        }
+    }
+
+    void duplicateNote(long rowId) {
+        Cursor note = fetchNote(rowId);
+        String title = note.getString(
+                note.getColumnIndexOrThrow(NotesDbAdapter.KEY_TITLE));
+        String body = note.getString(
+                note.getColumnIndexOrThrow(NotesDbAdapter.KEY_BODY));
+        createNote(title, body);
+
     }
 
     /**
@@ -141,7 +155,7 @@ public class NotesDbAdapter {
      *
      * @return Cursor over all notes
      */
-    public Cursor fetchAllNotes() {
+    Cursor fetchAllNotes() {
 
         return mDb.query(DATABASE_TABLE, new String[]{KEY_ROWID, KEY_TITLE,
                 KEY_BODY}, null, null, null, null, null);
@@ -154,7 +168,7 @@ public class NotesDbAdapter {
      * @return Cursor positioned to matching note, if found
      * @throws SQLException if note could not be found/retrieved
      */
-    public Cursor fetchNote(long rowId) throws SQLException {
+    Cursor fetchNote(long rowId) throws SQLException {
 
         Cursor mCursor =
 
@@ -178,7 +192,7 @@ public class NotesDbAdapter {
      * @param body  value to set note body to
      * @return true if the note was successfully updated, false otherwise
      */
-    public boolean updateNote(long rowId, String title, String body) {
+    boolean updateNote(long rowId, String title, String body) {
         ContentValues args = new ContentValues();
         args.put(KEY_TITLE, title);
         args.put(KEY_BODY, body);

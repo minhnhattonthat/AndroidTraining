@@ -20,6 +20,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -52,6 +53,12 @@ public class NoteEdit extends Activity {
         setContentView(R.layout.note_edit);
 
         mTitleText = (EditText) findViewById(R.id.title);
+        String TitleText = mTitleText.getText().toString();
+        if(TextUtils.isEmpty(TitleText)){
+            mTitleText.setError("R.string.title_empty");
+            return;
+        }
+        
         mBodyText = (EditText) findViewById(R.id.body);
 
         Button confirmButton = (Button) findViewById(R.id.confirm);
