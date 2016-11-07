@@ -22,7 +22,6 @@ import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.os.Bundle;
 import android.util.Log;
 
 /**
@@ -40,6 +39,7 @@ class NotesDbAdapter {
     static final String KEY_TITLE = "title";
     static final String KEY_BODY = "body";
     static final String KEY_ROWID = "_id";
+    static final String KEY_DATE = "date";
 
     private static final String TAG = "NotesDbAdapter";
     private DatabaseHelper mDbHelper;
@@ -49,12 +49,12 @@ class NotesDbAdapter {
      * Database creation sql statement
      */
     private static final String DATABASE_CREATE =
-            "create table notes (_id integer primary key autoincrement, "
+            "create table IF NOT EXISTS notes (_id integer primary key autoincrement, "
                     + "title text not null, body text not null);";
 
     private static final String DATABASE_NAME = "data";
     private static final String DATABASE_TABLE = "notes";
-    private static final int DATABASE_VERSION = 2;
+    private static final int DATABASE_VERSION = 3;
 
     private final Context mCtx;
 
@@ -72,10 +72,13 @@ class NotesDbAdapter {
 
         @Override
         public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-            Log.w(TAG, "Upgrading database from version " + oldVersion + " to "
-                    + newVersion + ", which will destroy all old data");
-            db.execSQL("DROP TABLE IF EXISTS notes");
+            //add new column
+            if (newVersion > oldVersion) {
+                db.execSQL("ALTER TABLE notes ADD COLUMN date INTEGER DEFAULT 0");
+            }
+
             onCreate(db);
+
         }
     }
 
@@ -119,9 +122,11 @@ class NotesDbAdapter {
      * @return rowId or -1 if failed
      */
     long createNote(String title, String body) {
+        long date = System.currentTimeMillis();
         ContentValues initialValues = new ContentValues();
         initialValues.put(KEY_TITLE, title);
         initialValues.put(KEY_BODY, body);
+        initialValues.put(KEY_DATE, date);
 
         return mDb.insert(DATABASE_TABLE, null, initialValues);
     }
@@ -158,7 +163,7 @@ class NotesDbAdapter {
     Cursor fetchAllNotes() {
 
         return mDb.query(DATABASE_TABLE, new String[]{KEY_ROWID, KEY_TITLE,
-                KEY_BODY}, null, null, null, null, null);
+                KEY_BODY,KEY_DATE}, null, null, null, null, null);
     }
 
     /**
@@ -173,7 +178,7 @@ class NotesDbAdapter {
         Cursor mCursor =
 
                 mDb.query(true, DATABASE_TABLE, new String[]{KEY_ROWID,
-                                KEY_TITLE, KEY_BODY}, KEY_ROWID + "=" + rowId, null,
+                                KEY_TITLE, KEY_BODY, KEY_DATE}, KEY_ROWID + "=" + rowId, null,
                         null, null, null, null);
         if (mCursor != null) {
             mCursor.moveToFirst();
@@ -193,10 +198,19 @@ class NotesDbAdapter {
      * @return true if the note was successfully updated, false otherwise
      */
     boolean updateNote(long rowId, String title, String body) {
+        long date = System.currentTimeMillis();
         ContentValues args = new ContentValues();
         args.put(KEY_TITLE, title);
         args.put(KEY_BODY, body);
+        args.put(KEY_DATE, date);
 
         return mDb.update(DATABASE_TABLE, args, KEY_ROWID + "=" + rowId, null) > 0;
+    }
+
+    boolean updateTime(long rowId){
+        long date = System.currentTimeMillis();
+        ContentValues args = new ContentValues();
+        args.put(KEY_DATE,date);
+        return mDb.update(DATABASE_TABLE,args,KEY_ROWID + "=" + rowId, null) > 0;
     }
 }

@@ -17,6 +17,7 @@
 package com.android.demo.notepad3;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
@@ -24,12 +25,14 @@ import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
 public class NoteEdit extends Activity {
 
     private EditText mTitleText;
     private EditText mBodyText;
     private Long mRowId;
+    private Long mDate;
     private NotesDbAdapter mDbHelper;
 
     private void populateFields() {
@@ -53,18 +56,13 @@ public class NoteEdit extends Activity {
         setContentView(R.layout.note_edit);
 
         mTitleText = (EditText) findViewById(R.id.title);
-        String TitleText = mTitleText.getText().toString();
-        if(TextUtils.isEmpty(TitleText)){
-            mTitleText.setError("R.string.title_empty");
-            return;
-        }
-        
         mBodyText = (EditText) findViewById(R.id.body);
 
         Button confirmButton = (Button) findViewById(R.id.confirm);
 
         mRowId = savedInstanceState != null ? savedInstanceState.getLong(NotesDbAdapter.KEY_ROWID)
-                : null;//TODO: ??
+                : null;
+
         if (mRowId == null) {
             Bundle extras = getIntent().getExtras();
             mRowId = extras != null ? extras.getLong(NotesDbAdapter.KEY_ROWID)
@@ -72,11 +70,18 @@ public class NoteEdit extends Activity {
         }
         populateFields();
 
+
         confirmButton.setOnClickListener(new View.OnClickListener() {
 
             public void onClick(View view) {
-                setResult(RESULT_OK);
-                finish();
+                boolean checkEmpty = mTitleText.getText().toString().trim().length() > 0;
+                if (!checkEmpty) {
+                    mTitleText.setError("Title cannot be empty.");
+                } else {
+                    mDbHelper.updateTime(mRowId);
+                    setResult(RESULT_OK);
+                    finish();
+                }
             }
 
         });
@@ -92,7 +97,11 @@ public class NoteEdit extends Activity {
         String title = mTitleText.getText().toString();
         String body = mBodyText.getText().toString();
 
-        if (mRowId == null) {
+        final boolean checkEmpty = title.trim().length() > 0;
+        if (!checkEmpty) {
+            setResult(RESULT_CANCELED);
+            finish();
+        } else if (mRowId == null) {
             long id = mDbHelper.createNote(title, body);
             if (id > 0) {
                 mRowId = id;

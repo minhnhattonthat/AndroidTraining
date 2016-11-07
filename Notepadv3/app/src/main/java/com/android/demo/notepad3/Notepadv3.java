@@ -17,6 +17,7 @@
 package com.android.demo.notepad3;
 
 import android.app.ListActivity;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
@@ -62,19 +63,15 @@ public class Notepadv3 extends ListActivity {
         startManagingCursor(mNotesCursor);
 
         // Create an array to specify the fields we want to display in the list (only TITLE)
-        String[] from = new String[]{NotesDbAdapter.KEY_TITLE};
+        String[] from = new String[]{NotesDbAdapter.KEY_TITLE, NotesDbAdapter.KEY_BODY, NotesDbAdapter.KEY_DATE};
 
         // and an array of the fields we want to bind those fields to (in this case just text1)
-        int[] to = new int[]{R.id.text1};
+        int[] to = new int[]{R.id.text1, R.id.text2, R.id.text3};
 
         // Now create a simple cursor adapter and set it to display
         SimpleCursorAdapter notes =
                 new SimpleCursorAdapter(this, R.layout.notes_row, mNotesCursor, from, to);
 
-        String[] from2 = new String[]{NotesDbAdapter.KEY_BODY};
-        int[] to2 = new int[]{R.id.text2};
-        SimpleCursorAdapter notes2 =
-                new SimpleCursorAdapter(this, R.layout.notes_row, mNotesCursor, from2, to2);
         setListAdapter(notes);
     }
 
@@ -141,8 +138,9 @@ public class Notepadv3 extends ListActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         super.onActivityResult(requestCode, resultCode, intent);
         fillData();
-        if(requestCode == 0)
+        if (requestCode == 0 && resultCode != 0) {
             Toast.makeText(this, "File created", Toast.LENGTH_SHORT).show();
+        }
         else if (requestCode == 1)
             Toast.makeText(this, "File edited", Toast.LENGTH_SHORT).show();
     }
