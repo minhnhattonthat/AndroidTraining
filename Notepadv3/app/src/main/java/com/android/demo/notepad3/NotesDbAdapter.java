@@ -22,7 +22,11 @@ import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.util.Log;
+
+import java.sql.Date;
+
+import static com.android.demo.notepad3.Notepadv3.df;
+
 
 /**
  * Simple notes database access helper class. Defines the basic CRUD operations
@@ -50,7 +54,7 @@ class NotesDbAdapter {
      */
     private static final String DATABASE_CREATE =
             "create table IF NOT EXISTS notes (_id integer primary key autoincrement, "
-                    + "title text not null, body text not null);";
+                    + "title text not null, body text not null, date integer not null);";
 
     private static final String DATABASE_NAME = "data";
     private static final String DATABASE_TABLE = "notes";
@@ -64,6 +68,8 @@ class NotesDbAdapter {
             super(context, DATABASE_NAME, null, DATABASE_VERSION);
         }
 
+        private static final String update3 = "ALTER TABLE notes ADD COLUMN date INTEGER DEFAULT NOT NULL";
+
         @Override
         public void onCreate(SQLiteDatabase db) {
 
@@ -73,8 +79,8 @@ class NotesDbAdapter {
         @Override
         public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
             //add new column
-            if (newVersion > oldVersion) {
-                db.execSQL("ALTER TABLE notes ADD COLUMN date INTEGER DEFAULT 0");
+            if (oldVersion < 3) {
+                db.execSQL(update3);
             }
 
             onCreate(db);
@@ -122,7 +128,11 @@ class NotesDbAdapter {
      * @return rowId or -1 if failed
      */
     long createNote(String title, String body) {
-        long date = System.currentTimeMillis();
+
+        long unixTime = System.currentTimeMillis();
+        Date dateO = new Date(unixTime);
+        String date = df.format(dateO);
+
         ContentValues initialValues = new ContentValues();
         initialValues.put(KEY_TITLE, title);
         initialValues.put(KEY_BODY, body);
@@ -145,13 +155,13 @@ class NotesDbAdapter {
         }
     }
 
-    void duplicateNote(long rowId) {
+    long duplicateNote(long rowId) {
         Cursor note = fetchNote(rowId);
-        String title = note.getString(
+        String title = "Copy of " + note.getString(
                 note.getColumnIndexOrThrow(NotesDbAdapter.KEY_TITLE));
         String body = note.getString(
                 note.getColumnIndexOrThrow(NotesDbAdapter.KEY_BODY));
-        createNote(title, body);
+        return createNote(title, body);
 
     }
 
@@ -163,7 +173,7 @@ class NotesDbAdapter {
     Cursor fetchAllNotes() {
 
         return mDb.query(DATABASE_TABLE, new String[]{KEY_ROWID, KEY_TITLE,
-                KEY_BODY,KEY_DATE}, null, null, null, null, null);
+                KEY_BODY, KEY_DATE}, null, null, null, null, null);
     }
 
     /**
@@ -198,19 +208,16 @@ class NotesDbAdapter {
      * @return true if the note was successfully updated, false otherwise
      */
     boolean updateNote(long rowId, String title, String body) {
-        long date = System.currentTimeMillis();
+
+        long unixTime = System.currentTimeMillis();
+        Date dateO = new Date(unixTime);
+        String date = df.format(dateO);
+
         ContentValues args = new ContentValues();
         args.put(KEY_TITLE, title);
         args.put(KEY_BODY, body);
         args.put(KEY_DATE, date);
 
         return mDb.update(DATABASE_TABLE, args, KEY_ROWID + "=" + rowId, null) > 0;
-    }
-
-    boolean updateTime(long rowId){
-        long date = System.currentTimeMillis();
-        ContentValues args = new ContentValues();
-        args.put(KEY_DATE,date);
-        return mDb.update(DATABASE_TABLE,args,KEY_ROWID + "=" + rowId, null) > 0;
     }
 }

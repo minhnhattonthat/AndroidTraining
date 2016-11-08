@@ -9,5 +9,4 @@
     <string name="body">Body</string>
     <string name="confirm">Confirm</string>
     <string name="edit_note">Edit Note</string>
-    <string name="title_empty">Title must not be empty</string>
 </resources>

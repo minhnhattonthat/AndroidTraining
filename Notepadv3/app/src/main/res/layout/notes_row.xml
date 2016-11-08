@@ -8,16 +8,28 @@
         android:id="@+id/text1"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:ellipsize="marquee"
         android:paddingTop="10dp"
         android:textAlignment="textStart"
-        android:textSize="15dp" />
+        android:textSize="17sp"
+        android:textStyle="bold" />
 
     <TextView
         android:id="@+id/text2"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:maxLines="1"
         android:paddingBottom="10dp"
         android:textAlignment="textStart"
-        android:textSize="10dp" />
+        android:textSize="12sp"
+        android:textStyle="italic" />
+
+    <TextView
+        android:id="@+id/text3"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAlignment="textEnd"
+        android:textSize="12sp" />
 
 </LinearLayout>

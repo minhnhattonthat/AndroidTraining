@@ -17,22 +17,21 @@
 package com.android.demo.notepad3;
 
 import android.app.Activity;
-import android.content.Context;
-import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
-import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.Toast;
+
+import static com.android.demo.notepad3.Notepadv3.bodyUnedited;
+import static com.android.demo.notepad3.Notepadv3.titleUnedited;
 
 public class NoteEdit extends Activity {
 
     private EditText mTitleText;
     private EditText mBodyText;
+
     private Long mRowId;
-    private Long mDate;
     private NotesDbAdapter mDbHelper;
 
     private void populateFields() {
@@ -43,6 +42,7 @@ public class NoteEdit extends Activity {
                     note.getColumnIndexOrThrow(NotesDbAdapter.KEY_TITLE)));
             mBodyText.setText(note.getString(
                     note.getColumnIndexOrThrow(NotesDbAdapter.KEY_BODY)));
+
         }
     }
 
@@ -73,14 +73,13 @@ public class NoteEdit extends Activity {
 
         confirmButton.setOnClickListener(new View.OnClickListener() {
 
+            @Override
             public void onClick(View view) {
                 boolean checkEmpty = mTitleText.getText().toString().trim().length() > 0;
                 if (!checkEmpty) {
                     mTitleText.setError("Title cannot be empty.");
                 } else {
-                    mDbHelper.updateTime(mRowId);
-                    setResult(RESULT_OK);
-                    finish();
+                    saveState(true);
                 }
             }
 
@@ -90,24 +89,46 @@ public class NoteEdit extends Activity {
     @Override
     protected void onPause() {
         super.onPause();
-        saveState();
+        saveState(false);
     }
 
-    private void saveState() {
+    @Override
+    public void onBackPressed() {
+        saveState(true);
+    }
+
+
+    private void saveState(boolean shouldFinish) {
         String title = mTitleText.getText().toString();
         String body = mBodyText.getText().toString();
 
         final boolean checkEmpty = title.trim().length() > 0;
+        final boolean titleChanged = !titleUnedited.equals(title);
+        final boolean bodyChanged = !bodyUnedited.equals(body);
+
         if (!checkEmpty) {
             setResult(RESULT_CANCELED);
-            finish();
+
         } else if (mRowId == null) {
             long id = mDbHelper.createNote(title, body);
-            if (id > 0) {
+
+            if (id >= 0) {
                 mRowId = id;
+                setResult(RESULT_OK);
+            } else {
+                setResult(RESULT_CANCELED);
             }
-        } else {
+
+        } else if (titleChanged || bodyChanged) {
             mDbHelper.updateNote(mRowId, title, body);
+            setResult(RESULT_OK);
+
+        } else {
+            setResult(RESULT_CANCELED);
+        }
+
+        if (shouldFinish) {
+            finish();
         }
     }
 
