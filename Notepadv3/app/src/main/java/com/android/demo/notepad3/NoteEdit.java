@@ -34,14 +34,16 @@ public class NoteEdit extends Activity {
     private Long mRowId;
     private NotesDbAdapter mDbHelper;
 
+    private Cursor noteCursor;
+
     private void populateFields() {
         if (mRowId != null) {
-            Cursor note = mDbHelper.fetchNote(mRowId);
-            startManagingCursor(note);
-            mTitleText.setText(note.getString(
-                    note.getColumnIndexOrThrow(NotesDbAdapter.KEY_TITLE)));
-            mBodyText.setText(note.getString(
-                    note.getColumnIndexOrThrow(NotesDbAdapter.KEY_BODY)));
+            noteCursor = mDbHelper.fetchNote(mRowId);
+
+            mTitleText.setText(noteCursor.getString(
+                    noteCursor.getColumnIndexOrThrow(NotesDbAdapter.KEY_TITLE)));
+            mBodyText.setText(noteCursor.getString(
+                    noteCursor.getColumnIndexOrThrow(NotesDbAdapter.KEY_BODY)));
 
         }
     }
@@ -79,7 +81,7 @@ public class NoteEdit extends Activity {
                 if (!checkEmpty) {
                     mTitleText.setError("Title cannot be empty.");
                 } else {
-                    saveState(true);
+                    saveState(true, false);
                 }
             }
 
@@ -89,24 +91,22 @@ public class NoteEdit extends Activity {
     @Override
     protected void onPause() {
         super.onPause();
-        saveState(false);
+        saveState(false, true);
     }
 
     @Override
     public void onBackPressed() {
-        saveState(true);
+        saveState(true, true);
     }
 
 
-    private void saveState(boolean shouldFinish) {
+    private void saveState(boolean shouldFinish, boolean notClick) {
         String title = mTitleText.getText().toString();
         String body = mBodyText.getText().toString();
 
         final boolean checkEmpty = title.trim().length() > 0;
-        final boolean titleChanged = !titleUnedited.equals(title);
-        final boolean bodyChanged = !bodyUnedited.equals(body);
 
-        if (!checkEmpty) {
+        if (!checkEmpty || notClick) {
             setResult(RESULT_CANCELED);
 
         } else if (mRowId == null) {
@@ -119,7 +119,7 @@ public class NoteEdit extends Activity {
                 setResult(RESULT_CANCELED);
             }
 
-        } else if (titleChanged || bodyChanged) {
+        } else if (!titleUnedited.equals(title) || !bodyUnedited.equals(body)) {
             mDbHelper.updateNote(mRowId, title, body);
             setResult(RESULT_OK);
 
@@ -142,5 +142,16 @@ public class NoteEdit extends Activity {
     protected void onResume() {
         super.onResume();
         populateFields();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+    }
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        noteCursor = mDbHelper.fetchNote(mRowId);
     }
 }

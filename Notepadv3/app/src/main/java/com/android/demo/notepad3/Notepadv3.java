@@ -17,22 +17,16 @@
 package com.android.demo.notepad3;
 
 import android.app.ListActivity;
-import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.view.ContextMenu;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ContextMenu.ContextMenuInfo;
-import android.view.ViewGroup;
-import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.AdapterView.AdapterContextMenuInfo;
-import android.widget.SimpleCursorAdapter;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import java.text.DateFormat;
@@ -52,69 +46,6 @@ public class Notepadv3 extends ListActivity {
     private NotesDbAdapter mDbHelper;
     private Cursor mNotesCursor;
 
-    private class EfficientAdapter extends BaseAdapter {
-
-        private LayoutInflater mInflater;
-
-        public Cursor mCursor;
-
-        public String[] mFrom;
-        public int[] mTo;
-
-        public EfficientAdapter(Context context, Cursor cursor) {
-            mCursor = cursor;
-
-            mInflater = LayoutInflater.from(context);
-        }
-
-        public int getCount() {
-            return mCursor.getCount();
-        }
-
-
-        public Object getItem(int position) {
-            return position;
-        }
-
-
-        public long getItemId(int position) {
-            mCursor.moveToPosition(position);
-            return mCursor.getLong(mCursor.getColumnIndexOrThrow(NotesDbAdapter.KEY_ROWID));
-        }
-
-        public View getView(int position, View convertView, ViewGroup parent) {
-            ViewHolder holder;
-
-            if (convertView == null) {
-                convertView = mInflater.inflate(R.layout.notes_row, null);
-
-                holder = new ViewHolder();
-                holder.text1 = (TextView) convertView.findViewById(R.id.text1);
-                holder.text2 = (TextView) convertView.findViewById(R.id.text2);
-                holder.text3 = (TextView) convertView.findViewById(R.id.text3);
-
-                convertView.setTag(holder);
-            } else {
-                holder = (ViewHolder) convertView.getTag();
-            }
-
-            holder.text1.setText(mCursor.getString(
-                    mCursor.getColumnIndexOrThrow(NotesDbAdapter.KEY_TITLE)));
-            holder.text2.setText(mCursor.getString(
-                    mCursor.getColumnIndexOrThrow(NotesDbAdapter.KEY_BODY)));
-            holder.text3.setText(mCursor.getString(
-                    mCursor.getColumnIndexOrThrow(NotesDbAdapter.KEY_DATE)));
-
-            return convertView;
-        }
-
-        class ViewHolder {
-            TextView text1;
-            TextView text2;
-            TextView text3;
-        }
-    }
-
     /**
      * Called when the activity is first created.
      */
@@ -133,14 +64,25 @@ public class Notepadv3 extends ListActivity {
         registerForContextMenu(getListView());
     }
 
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (isFinishing()) {
+            mNotesCursor.close();
+            mDbHelper.close();
+        }
+    }
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        mNotesCursor = mDbHelper.fetchAllNotes();
+    }
+
     private void fillData() {
         mNotesCursor = mDbHelper.fetchAllNotes();
-        startManagingCursor(mNotesCursor);
-        if (mNotesCursor != null) {
-            EfficientAdapter notes = new EfficientAdapter(this, mNotesCursor);
 
-            setListAdapter(notes);
-        }
+        setListAdapter(new EfficientAdapter(this, mNotesCursor));
     }
 
     @Override
@@ -220,11 +162,14 @@ public class Notepadv3 extends ListActivity {
 
         if (resultCode != 0) {
             switch (requestCode) {
-                case 0:
+                case 0: {
                     Toast.makeText(this, "File created", Toast.LENGTH_SHORT).show();
-                case 1:
+                    break;
+                }
+                case 1: {
                     Toast.makeText(this, "File edited", Toast.LENGTH_SHORT).show();
                     break;
+                }
                 default:
                     break;
             }
@@ -232,4 +177,8 @@ public class Notepadv3 extends ListActivity {
 
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+    }
 }

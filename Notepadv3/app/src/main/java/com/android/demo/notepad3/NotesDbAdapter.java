@@ -68,7 +68,7 @@ class NotesDbAdapter {
             super(context, DATABASE_NAME, null, DATABASE_VERSION);
         }
 
-        private static final String update3 = "ALTER TABLE notes ADD COLUMN date INTEGER DEFAULT NOT NULL";
+        private static final String update3 = "ALTER TABLE notes ADD COLUMN date INTEGER DEFAULT 0";
 
         @Override
         public void onCreate(SQLiteDatabase db) {
@@ -86,6 +86,7 @@ class NotesDbAdapter {
             onCreate(db);
 
         }
+
     }
 
     /**
@@ -113,7 +114,7 @@ class NotesDbAdapter {
         return this;
     }
 
-    public void close() {
+    void close() {
         mDbHelper.close();
     }
 
@@ -147,12 +148,9 @@ class NotesDbAdapter {
      * @param rowId id of note to delete
      * @return true if deleted, false otherwise
      */
-    void deleteNote(long rowId) {
+    boolean deleteNote(long rowId) {
 
-        int i = mDb.delete(DATABASE_TABLE, KEY_ROWID + "=" + rowId, null);
-        if (i <= 0) {
-            throw new Error("Error: delete failed");
-        }
+        return mDb.delete(DATABASE_TABLE, KEY_ROWID + "=" + rowId, null) > 0;
     }
 
     long duplicateNote(long rowId) {
@@ -187,7 +185,7 @@ class NotesDbAdapter {
 
         Cursor mCursor =
 
-                mDb.query(true, DATABASE_TABLE, new String[]{KEY_ROWID,
+                mDb.query(false, DATABASE_TABLE, new String[]{KEY_ROWID,
                                 KEY_TITLE, KEY_BODY, KEY_DATE}, KEY_ROWID + "=" + rowId, null,
                         null, null, null, null);
         if (mCursor != null) {
@@ -220,4 +218,5 @@ class NotesDbAdapter {
 
         return mDb.update(DATABASE_TABLE, args, KEY_ROWID + "=" + rowId, null) > 0;
     }
+
 }
