@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Gu Gồ Nói</string>
+    <string name="no_sound">Add new sound</string>
+    <string name="icon">Icon</string>
+    <string name="action_change_theme">Change theme</string>
+
+    <string name="title_activity_fullscreen">FullscreenActivity</string>
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
+</resources>
