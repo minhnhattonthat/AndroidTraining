@@ -1,6 +1,7 @@
 package com.nhatton.ggtalkvn;
 
 import android.content.Context;
+import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,32 +13,36 @@ import java.util.ArrayList;
 public class SoundAdapter extends ArrayAdapter<Sound> {
     private ArrayList<Sound> items;
 
-    private Context c = null;
+    private Context sContext = null;
 
     public SoundAdapter(Context context, int textViewResourceId, ArrayList<Sound> items) {
         super(context, textViewResourceId, items);
         this.items = items;
-        this.c = context;
+        this.sContext = context;
     }
 
     @Override
+    public long getItemId(int position) {
+        return super.getItemId(position);
+    }
 
+    @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-        View v = convertView;
-        if (v == null) {
-            LayoutInflater vi = (LayoutInflater)c.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            v = vi.inflate(R.layout.list_row, null);
+        View view = convertView;
+        if (view == null) {
+            LayoutInflater layoutInflater = (LayoutInflater)sContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            view = layoutInflater.inflate(R.layout.list_row, null);
         }
 
-        Sound s = items.get(position);
+        Sound sound = items.get(position);
 
-        if (s != null) {
-            TextView description = (TextView) v.findViewById(R.id.description);
+        if (sound != null) {
+            TextView description = (TextView) view.findViewById(R.id.description);
             if (description != null) {
-                description.setText(s.getDescription());
+                description.setText(sound.getDescription());
             }
         }
 
-        return v;
+        return view;
     }
 }

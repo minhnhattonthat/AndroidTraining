@@ -2,7 +2,7 @@ package com.nhatton.ggtalkvn;
 
 public class Sound {
     private String mDescription = "";
-    private String mTag = "";
+    private String[] mTag = null;
     private int mSoundResourceId = -1;
 
     public void setDescription(String description) {
@@ -21,8 +21,12 @@ public class Sound {
         return mSoundResourceId;
     }
 
-    public void setTag(String tag) {
+    public void setTag(String[] tag) {
         mTag = tag;
+    }
+
+    public String[] getTag() {
+        return mTag;
     }
 
 }

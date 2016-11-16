@@ -7,4 +7,8 @@
     <string name="title_activity_fullscreen">FullscreenActivity</string>
     <string name="dummy_button">Dummy Button</string>
     <string name="dummy_content">DUMMY\nCONTENT</string>
+    <string name="input_hint">Nhập câu muốn đọc</string>
+    <string name="read">Đọc</string>
+    <string name="enter_fullscreen">Toàn màn hình</string>
+    <string name="pitch">Pitch:</string>
 </resources>
