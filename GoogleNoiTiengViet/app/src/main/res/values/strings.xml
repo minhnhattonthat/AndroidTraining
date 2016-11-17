@@ -2,13 +2,13 @@
     <string name="app_name">Gu Gồ Nói</string>
     <string name="no_sound">Add new sound</string>
     <string name="icon">Icon</string>
-    <string name="action_change_theme">Change theme</string>
 
     <string name="title_activity_fullscreen">FullscreenActivity</string>
-    <string name="dummy_button">Dummy Button</string>
-    <string name="dummy_content">DUMMY\nCONTENT</string>
     <string name="input_hint">Nhập câu muốn đọc</string>
     <string name="read">Đọc</string>
     <string name="enter_fullscreen">Toàn màn hình</string>
-    <string name="pitch">Pitch:</string>
+    <string name="pitch">Pitch: </string>
+    <string name="vol">Volume:</string>
+    <string name="action_save">Lưu lại</string>
+    <string name="title_activity_collection">Bộ sưu tập</string>
 </resources>
