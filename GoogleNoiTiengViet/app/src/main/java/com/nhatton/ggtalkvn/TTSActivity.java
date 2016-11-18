@@ -1,8 +1,8 @@
 package com.nhatton.ggtalkvn;
 
-import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.media.AudioManager;
 import android.speech.tts.TextToSpeech;
 import android.support.design.widget.FloatingActionButton;
@@ -12,7 +12,6 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.animation.DecelerateInterpolator;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.SeekBar;
@@ -20,7 +19,10 @@ import android.widget.TextView;
 
 import java.util.Locale;
 
+
 public class TTSActivity extends AppCompatActivity implements TextToSpeech.OnInitListener {
+
+    private SoundDbAdapter mDbHelper;
 
     private Button btnSpeak;
     private EditText txtText;
@@ -44,13 +46,15 @@ public class TTSActivity extends AppCompatActivity implements TextToSpeech.OnIni
         checkIntent.setAction(TextToSpeech.Engine.ACTION_CHECK_TTS_DATA);
         startActivityForResult(checkIntent, MY_DATA_CHECK_CODE);
 
-        tts = new TextToSpeech(this, this);
-
         btnSpeak = (Button) findViewById(R.id.input_button);
+
         btnSpeak.setOnClickListener(new View.OnClickListener() {
+
             @Override
             public void onClick(View arg0) {
+
                 CharSequence sentence = txtText.getText().toString();
+
                 tts.speak(sentence, TextToSpeech.QUEUE_FLUSH, null, null);
             }
         });
@@ -64,6 +68,7 @@ public class TTSActivity extends AppCompatActivity implements TextToSpeech.OnIni
         pitchBar = (SeekBar) findViewById(R.id.pitch_bar);
         pitchBar.setOnSeekBarChangeListener(new SeekBar.
                 OnSeekBarChangeListener() {
+
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
                 Float floatVal = .25f * i + 0.5f;
@@ -84,14 +89,13 @@ public class TTSActivity extends AppCompatActivity implements TextToSpeech.OnIni
         });
 
 
-
-        SeekBar volControl = (SeekBar)findViewById(R.id.vol_bar);
-        final AudioManager audioManager = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
+        SeekBar volControl = (SeekBar) findViewById(R.id.vol_bar);
+        final AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
         int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
         int curVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
 
-        volControl.setMax(maxVolume*10);
-        volControl.setProgress(curVolume*10);
+        volControl.setMax(maxVolume * 10);
+        volControl.setProgress(curVolume * 10);
         volControl.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
 
             @Override
@@ -106,7 +110,7 @@ public class TTSActivity extends AppCompatActivity implements TextToSpeech.OnIni
 
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, progress/10, 0);
+                audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, progress / 10, 0);
             }
         });
 
@@ -118,6 +122,7 @@ public class TTSActivity extends AppCompatActivity implements TextToSpeech.OnIni
                 startActivity(intent);
             }
         });
+
     }
 
     @Override
@@ -160,12 +165,22 @@ public class TTSActivity extends AppCompatActivity implements TextToSpeech.OnIni
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
+
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_save) {
-            return true;
+
+            mDbHelper = new SoundDbAdapter(this);
+
+            mDbHelper.open();
+
+            String description = txtText.getText().toString();
+
+            mDbHelper.createSound(description);
+
         }
         return super.onOptionsItemSelected(item);
     }
+
 }

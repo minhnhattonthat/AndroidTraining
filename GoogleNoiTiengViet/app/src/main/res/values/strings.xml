@@ -3,7 +3,7 @@
     <string name="no_sound">Add new sound</string>
     <string name="icon">Icon</string>
 
-    <string name="title_activity_fullscreen">FullscreenActivity</string>
+    <string name="title_activity_fullscreen">Toàn màn hình</string>
     <string name="input_hint">Nhập câu muốn đọc</string>
     <string name="read">Đọc</string>
     <string name="enter_fullscreen">Toàn màn hình</string>

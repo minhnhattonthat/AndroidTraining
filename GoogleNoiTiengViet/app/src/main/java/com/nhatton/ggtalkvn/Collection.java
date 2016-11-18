@@ -1,26 +1,30 @@
 package com.nhatton.ggtalkvn;
 
-import android.app.Activity;
+import android.app.ListActivity;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Bundle;
 
+import android.speech.tts.TextToSpeech;
 import android.support.v7.app.AppCompatActivity;
 import android.view.ContextMenu;
-import android.view.Menu;
 import android.view.View;
 import android.view.MenuItem;
 import android.widget.AdapterView;
 import android.widget.ListView;
 
-import java.util.ArrayList;
+import static com.nhatton.ggtalkvn.TTSActivity.tts;
 
-public class Collection extends AppCompatActivity {
+public class Collection extends ListActivity {
 
-    public ArrayList<Sound> mSounds = null;
+    public SoundDbAdapter mDbHelper;
 
-    private SoundAdapter mAdapter = null;
+    private Cursor mSoundCursor;
+
+    private ListView listView;
 
     static MediaPlayer mMediaPlayer = null;
 
@@ -30,67 +34,80 @@ public class Collection extends AppCompatActivity {
 
         setContentView(R.layout.activity_collection);
 
-        mSounds = new ArrayList<>();
+        mDbHelper = new SoundDbAdapter(this);
 
-        Sound s = new Sound();
-        s.setDescription("A hi hi");
-        s.setSoundResourceId(R.raw.line_1);
-        mSounds.add(s);
+        mDbHelper.open();
 
-        s = new Sound();
-        s.setDescription("Không có gì quý hơn độc lập tự do");
-        s.setSoundResourceId(R.raw.line_2);
-        mSounds.add(s);
+        fillData();
 
-        s = new Sound();
-        s.setDescription("Chúng ta không thuộc về nhau");
-        s.setSoundResourceId(R.raw.line_3);
-        mSounds.add(s);
+        registerForContextMenu(getListView());
 
-        mAdapter = new SoundAdapter(this, R.layout.list_row, mSounds);
-
-        final Context mContext = this;
-
-        ListView listView = (ListView) findViewById(android.R.id.list);
-        listView.setAdapter(mAdapter);
-
-        registerForContextMenu(listView);
-
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            Context context = mContext;
-
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Sound s = mSounds.get(position);
-
-                mMediaPlayer = MediaPlayer.create(context, s.getSoundResourceId());
-
-                mMediaPlayer.start();
-            }
-        });
+    }
 
 
+    @Override
+    protected void onListItemClick(ListView l, View v, int position, long id) {
+        super.onListItemClick(l, v, position, id);
+
+        Cursor c = mSoundCursor;
+
+        c.moveToPosition(position);
+
+        String description = c.getString(c.getColumnIndexOrThrow(SoundDbAdapter.KEY_DESCRIPTION));
+
+        tts.speak(description, TextToSpeech.QUEUE_FLUSH, null, null);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (isFinishing()) {
+
+            mSoundCursor.close();
+
+            mDbHelper.close();
+        }
+    }
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        mSoundCursor = mDbHelper.fetchAllSounds();
+    }
+
+    private void fillData() {
+        mSoundCursor = mDbHelper.fetchAllSounds();
+
+        setListAdapter(new SoundAdapter(this, mSoundCursor));
     }
 
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+
         super.onCreateContextMenu(menu, v, menuInfo);
+
         ListView.AdapterContextMenuInfo info = (ListView.AdapterContextMenuInfo) menuInfo;
+
         menu.add(0, info.position, 0, R.string.enter_fullscreen);
     }
 
     @Override
     public boolean onContextItemSelected(MenuItem item) {
-        Intent fs_intent = new Intent(this, FullscreenActivity.class);
-        String description = mSounds.get(item.getItemId()).getDescription();
-        int soundId = mSounds.get(item.getItemId()).getSoundResourceId();
-        Bundle extras = new Bundle();
 
-        extras.putString("TEXT_TO_FULLSCREEN", description);
-        extras.putInt("SOUND_TO_FULLSCREEN", soundId);
+        int id = item.getItemId();
 
-        fs_intent.putExtras(extras);
-        startActivity(fs_intent);
+        if (id > -1) {
+
+            Cursor cursor = mDbHelper.fetchSound(id);
+
+            Intent fs_intent = new Intent(this, FullscreenActivity.class);
+
+            String description = cursor.getString(cursor.getColumnIndexOrThrow(SoundDbAdapter.KEY_DESCRIPTION));
+
+            fs_intent.putExtra("TEXT_TO_FULLSCREEN", description);
+            startActivity(fs_intent);
+        }
+
         return super.onContextItemSelected(item);
     }
 
