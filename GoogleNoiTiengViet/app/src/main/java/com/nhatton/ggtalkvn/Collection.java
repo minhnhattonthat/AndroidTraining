@@ -22,6 +22,8 @@ public class Collection extends ListActivity {
 
     public SoundDbAdapter mDbHelper;
 
+    public SoundAdapter sAdapter;
+
     private Cursor mSoundCursor;
 
     private ListView listView;
@@ -67,18 +69,23 @@ public class Collection extends ListActivity {
 
             mDbHelper.close();
         }
+        else{
+            mSoundCursor.deactivate();
+        }
+
     }
 
     @Override
     protected void onRestart() {
         super.onRestart();
-        mSoundCursor = mDbHelper.fetchAllSounds();
+        mSoundCursor.requery();
+        sAdapter.notifyDataSetChanged();
     }
 
     private void fillData() {
         mSoundCursor = mDbHelper.fetchAllSounds();
 
-        setListAdapter(new SoundAdapter(this, mSoundCursor));
+        setListAdapter(sAdapter = new SoundAdapter(this, mSoundCursor));
     }
 
     @Override

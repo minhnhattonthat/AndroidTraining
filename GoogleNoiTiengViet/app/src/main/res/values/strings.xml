@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">Gu Gồ Nói</string>
-    <string name="no_sound">Add new sound</string>
+    <string name="no_sound">Trống</string>
     <string name="icon">Icon</string>
 
     <string name="title_activity_fullscreen">Toàn màn hình</string>
@@ -11,4 +11,10 @@
     <string name="vol">Volume:</string>
     <string name="action_save">Lưu lại</string>
     <string name="title_activity_collection">Bộ sưu tập</string>
+    <string name="toast_saved">Đã lưu</string>
+    <string name="alert_delete">Xóa không?</string>
+    <string name="toast_deleted">Đã xóa</string>
+    <string name="alert_delete_title">Xóa</string>
+    <string name="alert_delete_ok">Xóa</string>
+    <string name="alert_delete_cancel">Không</string>
 </resources>

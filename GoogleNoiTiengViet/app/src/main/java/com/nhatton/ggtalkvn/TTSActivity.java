@@ -2,7 +2,6 @@ package com.nhatton.ggtalkvn;
 
 import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
 import android.media.AudioManager;
 import android.speech.tts.TextToSpeech;
 import android.support.design.widget.FloatingActionButton;
@@ -16,6 +15,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.Locale;
 
@@ -34,6 +34,7 @@ public class TTSActivity extends AppCompatActivity implements TextToSpeech.OnIni
 
     public static TextToSpeech tts;
     public final static String localeAsString = "vi_VN";
+    private final static int smoothness = 10;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -94,8 +95,8 @@ public class TTSActivity extends AppCompatActivity implements TextToSpeech.OnIni
         int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
         int curVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
 
-        volControl.setMax(maxVolume * 10);
-        volControl.setProgress(curVolume * 10);
+        volControl.setMax(maxVolume * smoothness);
+        volControl.setProgress(curVolume * smoothness);
         volControl.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
 
             @Override
@@ -110,7 +111,7 @@ public class TTSActivity extends AppCompatActivity implements TextToSpeech.OnIni
 
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, progress / 10, 0);
+                audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, progress / smoothness, 0);
             }
         });
 
@@ -177,7 +178,11 @@ public class TTSActivity extends AppCompatActivity implements TextToSpeech.OnIni
 
             String description = txtText.getText().toString();
 
-            mDbHelper.createSound(description);
+            long t = mDbHelper.createSound(description);
+
+            if(t > -1){
+                Toast.makeText(this, R.string.toast_saved,Toast.LENGTH_SHORT).show();
+            }
 
         }
         return super.onOptionsItemSelected(item);
