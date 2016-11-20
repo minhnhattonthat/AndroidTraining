@@ -1,8 +1,6 @@
 package com.nhatton.ggtalkvn;
 
 import android.app.Activity;
-import android.media.MediaPlayer;
-import android.net.Uri;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
 import android.view.View;
@@ -10,7 +8,6 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.TextView;
 
-import static com.nhatton.ggtalkvn.Collection.mMediaPlayer;
 import static com.nhatton.ggtalkvn.TTSActivity.tts;
 
 public class FullscreenActivity extends Activity {

@@ -16,9 +16,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 
-public class SoundAdapter extends BaseAdapter {
+class SoundAdapter extends BaseAdapter {
 
-    private SoundDbAdapter mDbHelper;
+    private SoundDbHelper mDbHelper;
 
     private LayoutInflater mInflater;
 
@@ -29,7 +29,7 @@ public class SoundAdapter extends BaseAdapter {
     SoundAdapter(Context context, Cursor cursor) {
         mCursor = cursor;
         ctx = context;
-        mDbHelper = new SoundDbAdapter(ctx);
+        mDbHelper = new SoundDbHelper(ctx);
         mInflater = LayoutInflater.from(ctx);
     }
 
@@ -43,7 +43,7 @@ public class SoundAdapter extends BaseAdapter {
 
     public long getItemId(int position) {
         mCursor.moveToPosition(position);
-        return mCursor.getLong(mCursor.getColumnIndexOrThrow(SoundDbAdapter.KEY_ROWID));
+        return mCursor.getLong(mCursor.getColumnIndexOrThrow(SoundDbHelper.KEY_ROWID));
     }
 
     public View getView(int position, View convertView, ViewGroup parent) {
@@ -65,7 +65,7 @@ public class SoundAdapter extends BaseAdapter {
         holder.buttonDelete.setTag(position);
 
         holder.text.setText(mCursor.getString(
-                mCursor.getColumnIndexOrThrow(SoundDbAdapter.KEY_DESCRIPTION)));
+                mCursor.getColumnIndexOrThrow(SoundDbHelper.KEY_DESCRIPTION)));
 
 
         holder.buttonDelete.setOnClickListener(new View.OnClickListener() {
@@ -79,28 +79,25 @@ public class SoundAdapter extends BaseAdapter {
                 builder.setMessage(R.string.alert_delete)
                         .setTitle(R.string.alert_delete_title);
 
-                builder.setPositiveButton(R.string.alert_delete_ok, new DialogInterface.OnClickListener() {
+                builder.setPositiveButton(R.string.alert_delete_ok,
+                        new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
-
                         mDbHelper.open();
+                        Cursor c = mCursor;
+                        c.moveToPosition(position);
 
-                        mCursor = mDbHelper.fetchSound(position);
-
-                        Long rowId = mCursor.getLong(mCursor.getColumnIndexOrThrow(SoundDbAdapter.KEY_ROWID));
-
-                        if (mDbHelper.deleteSound(rowId)){
-
+                        if (mDbHelper.deleteSound(c.getLong(c.getColumnIndex(SoundDbHelper.KEY_ROWID)))){
                             Toast.makeText(ctx, R.string.toast_deleted, Toast.LENGTH_SHORT).show();
-
+                            mCursor.requery();
                             notifyDataSetChanged();
-
                         }
-
+                        mDbHelper.close();
+                        c.close();
                     }
                 });
-                builder.setNegativeButton(R.string.alert_delete_cancel, new DialogInterface.OnClickListener() {
+                builder.setNegativeButton(R.string.alert_delete_cancel,
+                        new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
-
                     }
                 });
 
@@ -115,10 +112,6 @@ public class SoundAdapter extends BaseAdapter {
     private class ViewHolder {
         TextView text;
         Button buttonDelete;
-    }
-
-    public void refresh(){
-
     }
 
 }

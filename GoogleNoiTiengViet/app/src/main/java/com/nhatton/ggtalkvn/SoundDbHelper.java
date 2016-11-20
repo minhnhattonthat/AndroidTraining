@@ -7,12 +7,12 @@ import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-public class SoundDbAdapter {
+public class SoundDbHelper {
     static final String KEY_DESCRIPTION = "description";
     static final String KEY_ROWID = "_id";
 
 
-    private static final String TAG = "SoundDbAdapter";
+    private static final String TAG = "SoundDbHelper";
     private DatabaseHelper mDbHelper;
     private SQLiteDatabase mDb;
 
@@ -35,20 +35,15 @@ public class SoundDbAdapter {
             super(context, DATABASE_NAME, null, DATABASE_VERSION);
         }
 
-
         @Override
         public void onCreate(SQLiteDatabase db) {
-
             db.execSQL(DATABASE_CREATE);
         }
 
         @Override
         public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-
             onCreate(db);
-
         }
-
     }
 
     /**
@@ -57,7 +52,7 @@ public class SoundDbAdapter {
      *
      * @param ctx the Context within which to work
      */
-    SoundDbAdapter(Context ctx) {
+    SoundDbHelper(Context ctx) {
         this.mCtx = ctx;
     }
 
@@ -70,7 +65,7 @@ public class SoundDbAdapter {
      * initialization call)
      * @throws SQLException if the database could be neither opened or created
      */
-    SoundDbAdapter open() throws SQLException {
+    SoundDbHelper open() throws SQLException {
         mDbHelper = new DatabaseHelper(mCtx);
         mDb = mDbHelper.getWritableDatabase();
         return this;
@@ -81,34 +76,44 @@ public class SoundDbAdapter {
     }
 
     long createSound(String description) {
+        long result;
+        if (checkExist(description)) {
+            Cursor c = mDb.query(DATABASE_TABLE, new String[]{KEY_ROWID, KEY_DESCRIPTION},
+                    KEY_DESCRIPTION + "=" + description, null, null, null, null);
+            c.moveToFirst();
+            result = c.getLong(c.getColumnIndex(KEY_ROWID));
+            c.close();
+        } else {
+            ContentValues initialValues = new ContentValues();
+            initialValues.put(KEY_DESCRIPTION, description);
+            result = mDb.insert(DATABASE_TABLE, null, initialValues);
+        }
+        return result;
+    }
 
-        ContentValues initialValues = new ContentValues();
-        initialValues.put(KEY_DESCRIPTION, description);
-
-        return mDb.insert(DATABASE_TABLE, null, initialValues);
+    boolean checkExist(String description) {
+        Cursor c = mDb.query(DATABASE_TABLE, new String[]{KEY_ROWID, KEY_DESCRIPTION},
+                KEY_DESCRIPTION + "=?", new String[]{description}, null, null, null);
+        int count = c.getCount();
+        c.close();
+        return (count > 0);
     }
 
     boolean deleteSound(long rowId) {
-
         return mDb.delete(DATABASE_TABLE, KEY_ROWID + "=" + rowId, null) > 0;
     }
 
     Cursor fetchAllSounds() {
-
         return mDb.query(DATABASE_TABLE, new String[]{KEY_ROWID, KEY_DESCRIPTION}, null, null, null, null, null);
     }
 
     Cursor fetchSound(long rowId) throws SQLException {
-
-        Cursor mCursor =
-
-                mDb.query(false, DATABASE_TABLE, new String[]{KEY_ROWID,
-                                KEY_DESCRIPTION}, KEY_ROWID + "=" + rowId, null,
-                        null, null, null, null);
+        Cursor mCursor = mDb.query(DATABASE_TABLE, new String[]{KEY_ROWID,
+                        KEY_DESCRIPTION}, KEY_ROWID + "=" + rowId, null,
+                null, null, null, null);
         if (mCursor != null) {
             mCursor.moveToFirst();
         }
         return mCursor;
-
     }
 }

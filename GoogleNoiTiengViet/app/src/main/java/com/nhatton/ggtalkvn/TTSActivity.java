@@ -2,6 +2,7 @@ package com.nhatton.ggtalkvn;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Rect;
 import android.media.AudioManager;
 import android.speech.tts.TextToSpeech;
 import android.support.design.widget.FloatingActionButton;
@@ -10,7 +11,9 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.SeekBar;
@@ -19,22 +22,17 @@ import android.widget.Toast;
 
 import java.util.Locale;
 
-
 public class TTSActivity extends AppCompatActivity implements TextToSpeech.OnInitListener {
+    public static final String LOCALE_AS_STRING = "vi_VN";
+    private static final int SMOOTHNESS = 10;
+    private static final int MY_DATA_CHECK_CODE = 0;
 
-    private SoundDbAdapter mDbHelper;
-
-    private Button btnSpeak;
     private EditText txtText;
-
-    private SeekBar pitchBar;
     private TextView pitchValue;
-
-    private int MY_DATA_CHECK_CODE = 0;
+    private TextView speedValue;
 
     public static TextToSpeech tts;
-    public final static String localeAsString = "vi_VN";
-    private final static int smoothness = 10;
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -47,8 +45,7 @@ public class TTSActivity extends AppCompatActivity implements TextToSpeech.OnIni
         checkIntent.setAction(TextToSpeech.Engine.ACTION_CHECK_TTS_DATA);
         startActivityForResult(checkIntent, MY_DATA_CHECK_CODE);
 
-        btnSpeak = (Button) findViewById(R.id.input_button);
-
+        Button btnSpeak = (Button) findViewById(R.id.input_button);
         btnSpeak.setOnClickListener(new View.OnClickListener() {
 
             @Override
@@ -66,42 +63,38 @@ public class TTSActivity extends AppCompatActivity implements TextToSpeech.OnIni
         pitchValue = (TextView) findViewById(R.id.pitch_value);
         pitchValue.setText("1.0");
 
-        pitchBar = (SeekBar) findViewById(R.id.pitch_bar);
+        SeekBar pitchBar = (SeekBar) findViewById(R.id.pitch_bar);
         pitchBar.setOnSeekBarChangeListener(new SeekBar.
                 OnSeekBarChangeListener() {
 
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-                Float floatVal = .25f * i + 0.5f;
+                float floatVal = .25f * i + 0.5f;
                 pitchValue.setText(String.valueOf(floatVal));
                 tts.setPitch(floatVal);
             }
 
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
-
             }
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-
             }
 
         });
 
+        speedValue = (TextView) findViewById(R.id.speed_value);
+        speedValue.setText("1.0");
 
-        SeekBar volControl = (SeekBar) findViewById(R.id.vol_bar);
-        final AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
-        int curVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
-
-        volControl.setMax(maxVolume * smoothness);
-        volControl.setProgress(curVolume * smoothness);
-        volControl.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+        SeekBar speedBar = (SeekBar) findViewById(R.id.speed_bar);
+        speedBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){
 
             @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-
+            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+                float floatVal = .5f * i + 0.5f;
+                speedValue.setText(String.valueOf(floatVal));
+                tts.setSpeechRate(floatVal);
             }
 
             @Override
@@ -110,8 +103,31 @@ public class TTSActivity extends AppCompatActivity implements TextToSpeech.OnIni
             }
 
             @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+
+        SeekBar volControl = (SeekBar) findViewById(R.id.vol_bar);
+        final AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+        int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+        int curVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+
+        volControl.setMax(maxVolume * SMOOTHNESS);
+        volControl.setProgress(curVolume * SMOOTHNESS);
+        volControl.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
+
+            @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, progress / smoothness, 0);
+                audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, progress / SMOOTHNESS, 0);
             }
         });
 
@@ -119,7 +135,7 @@ public class TTSActivity extends AppCompatActivity implements TextToSpeech.OnIni
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(TTSActivity.this, Collection.class);
+                Intent intent = new Intent(TTSActivity.this, CollectionActivity.class);
                 startActivity(intent);
             }
         });
@@ -128,9 +144,8 @@ public class TTSActivity extends AppCompatActivity implements TextToSpeech.OnIni
 
     @Override
     public void onInit(int status) {
-
         if (status == TextToSpeech.SUCCESS) {
-            int result = tts.setLanguage(new Locale(localeAsString));
+            int result = tts.setLanguage(new Locale(LOCALE_AS_STRING));
             if (result == TextToSpeech.LANG_MISSING_DATA
                     || result == TextToSpeech.LANG_NOT_SUPPORTED) {
                 Log.e("TTS", "This Language is not supported");
@@ -141,7 +156,6 @@ public class TTSActivity extends AppCompatActivity implements TextToSpeech.OnIni
     }
 
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-
         if (requestCode == MY_DATA_CHECK_CODE) {
             if (resultCode == TextToSpeech.Engine.CHECK_VOICE_DATA_PASS) {
                 tts = new TextToSpeech(this, this);
@@ -162,30 +176,45 @@ public class TTSActivity extends AppCompatActivity implements TextToSpeech.OnIni
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_save) {
-
-            mDbHelper = new SoundDbAdapter(this);
-
-            mDbHelper.open();
-
-            String description = txtText.getText().toString();
-
-            long t = mDbHelper.createSound(description);
-
-            if(t > -1){
-                Toast.makeText(this, R.string.toast_saved,Toast.LENGTH_SHORT).show();
+    public boolean dispatchTouchEvent(MotionEvent event) {
+        if (event.getAction() == MotionEvent.ACTION_DOWN) {
+            View v = getCurrentFocus();
+            if ( v instanceof EditText) {
+                Rect outRect = new Rect();
+                v.getGlobalVisibleRect(outRect);
+                if (!outRect.contains((int)event.getRawX(), (int)event.getRawY())) {
+                    v.clearFocus();
+                    InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                    imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+                }
             }
+        }
+        return super.dispatchTouchEvent( event );
+    }
 
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        if (item.getItemId() == R.id.action_save) {
+            SoundDbHelper mDbHelper = new SoundDbHelper(this);
+            mDbHelper.open();
+            String description = txtText.getText().toString();
+            long t = mDbHelper.createSound(description);
+            if (t < 0) {
+                Log.e("TTS", "Save failed");
+            } else if (t < mDbHelper.fetchAllSounds().getCount()) {
+                Toast.makeText(this, R.string.toast_exist, Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, R.string.toast_saved, Toast.LENGTH_SHORT).show();
+            }
+            mDbHelper.close();
         }
         return super.onOptionsItemSelected(item);
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        tts.shutdown();
+    }
 }
