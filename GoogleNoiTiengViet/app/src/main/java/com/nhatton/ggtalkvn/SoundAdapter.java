@@ -30,6 +30,7 @@ class SoundAdapter extends BaseAdapter {
         mCursor = cursor;
         ctx = context;
         mDbHelper = new SoundDbHelper(ctx);
+
         mInflater = LayoutInflater.from(ctx);
     }
 
@@ -79,30 +80,29 @@ class SoundAdapter extends BaseAdapter {
                 builder.setMessage(R.string.alert_delete)
                         .setTitle(R.string.alert_delete_title);
 
-                builder.setPositiveButton(R.string.alert_delete_ok,
-                        new DialogInterface.OnClickListener() {
+                builder.setPositiveButton(R.string.alert_delete_ok, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         mDbHelper.open();
-                        Cursor c = mCursor;
+                        Cursor c = mDbHelper.fetchAllSounds();
+
                         c.moveToPosition(position);
 
-                        if (mDbHelper.deleteSound(c.getLong(c.getColumnIndex(SoundDbHelper.KEY_ROWID)))){
+                        if (mDbHelper.deleteSound(c.getLong
+                                (c.getColumnIndex(SoundDbHelper.KEY_ROWID)))) {
                             Toast.makeText(ctx, R.string.toast_deleted, Toast.LENGTH_SHORT).show();
-                            mCursor.requery();
+                            mCursor = mDbHelper.fetchAllSounds();
                             notifyDataSetChanged();
                         }
-                        mDbHelper.close();
                         c.close();
+                        mDbHelper.close();
                     }
                 });
-                builder.setNegativeButton(R.string.alert_delete_cancel,
-                        new DialogInterface.OnClickListener() {
+
+                builder.setNegativeButton(R.string.alert_delete_cancel, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                     }
                 });
-
                 builder.create().show();
-
             }
         });
 
@@ -113,5 +113,4 @@ class SoundAdapter extends BaseAdapter {
         TextView text;
         Button buttonDelete;
     }
-
 }

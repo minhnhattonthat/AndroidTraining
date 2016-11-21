@@ -9,7 +9,6 @@ import android.view.ContextMenu;
 import android.view.View;
 import android.view.MenuItem;
 import android.widget.ListView;
-import android.widget.TextView;
 
 import static com.nhatton.ggtalkvn.TTSActivity.tts;
 
@@ -32,31 +31,26 @@ public class CollectionActivity extends ListActivity{
     @Override
     protected void onListItemClick(ListView l, View v, int position, long id) {
         super.onListItemClick(l, v, position, id);
-
         Cursor c = mSoundCursor;
         c.moveToPosition(position);
         String description = c.getString(c.getColumnIndexOrThrow(SoundDbHelper.KEY_DESCRIPTION));
         tts.speak(description, TextToSpeech.QUEUE_FLUSH, null, null);
-        c.close();
+
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        if (isFinishing()) {
-            mSoundCursor.close();
-
-        } else {
-            mSoundCursor.deactivate();
-        }
+        mSoundCursor.close();
         mDbHelper.close();
     }
 
     @Override
     protected void onRestart() {
+        mDbHelper = new SoundDbHelper(this);
+        mDbHelper.open();
+        fillData();
         super.onRestart();
-        mSoundCursor.requery();
-        mAdapter.notifyDataSetChanged();
     }
 
     private void fillData() {

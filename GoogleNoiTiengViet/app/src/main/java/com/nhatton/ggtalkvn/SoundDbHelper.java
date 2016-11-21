@@ -7,7 +7,7 @@ import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-public class SoundDbHelper {
+class SoundDbHelper {
     static final String KEY_DESCRIPTION = "description";
     static final String KEY_ROWID = "_id";
 
@@ -91,7 +91,7 @@ public class SoundDbHelper {
         return result;
     }
 
-    boolean checkExist(String description) {
+    private boolean checkExist(String description) {
         Cursor c = mDb.query(DATABASE_TABLE, new String[]{KEY_ROWID, KEY_DESCRIPTION},
                 KEY_DESCRIPTION + "=?", new String[]{description}, null, null, null);
         int count = c.getCount();
