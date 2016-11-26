@@ -2,33 +2,55 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@color/gray"
-    android:descendantFocusability="blocksDescendants">
-
-    <ImageView
-        android:id="@+id/main_weather_icon"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:background="@android:drawable/picture_frame"
-        android:contentDescription="@string/weather_icon"
-        android:minHeight="64dp"
-        android:minWidth="64dp" />
+    android:background="@color/white"
+    android:descendantFocusability="blocksDescendants"
+    android:paddingEnd="16dp"
+    android:paddingStart="16dp">
 
     <TextView
         android:id="@+id/main_city_name"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textSize="48sp"
-        android:minHeight="64dp"
-        android:minWidth="64dp"
-        android:layout_toEndOf="@id/main_weather_icon" />
+        android:textAlignment="textStart"
+        android:textSize="25sp"
+        android:textStyle="bold" />
 
-    <TextView
-        android:id="@+id/main_temp_c"
-        android:layout_width="wrap_content"
+    <RelativeLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minHeight="64dp"
-        android:minWidth="64dp"
-        android:layout_toEndOf="@id/main_city_name" />
+        android:layout_below="@id/main_city_name">
+
+        <ImageView
+            android:id="@+id/main_weather_icon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:contentDescription="@string/weather_icon"
+            android:gravity="bottom"
+            android:minHeight="64dp"
+            android:minWidth="64dp" />
+
+        <TextView
+            android:id="@+id/main_temp_c"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toEndOf="@id/main_weather_icon"
+            android:minHeight="64dp"
+            android:paddingEnd="6dp"
+            android:paddingStart="6dp"
+            android:paddingTop="7dp"
+            android:textSize="36sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/main_weather_condition"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:minHeight="64dp"
+            android:paddingEnd="6dp"
+            android:paddingStart="6dp"
+            android:paddingTop="13dp"
+            android:textSize="18sp" />
+    </RelativeLayout>
 
 </RelativeLayout>

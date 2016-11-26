@@ -58,7 +58,7 @@ class CityAdapter extends BaseAdapter {
         }
         holder.checkBox.setText(CITY_LIST[position]);
 
-        if (mSelectedCityList.contains(CITY_LIST[position])) {
+        if (mSelectedCityList.contains(COORDINATE_LIST[position])) {
             holder.checkBox.setChecked(true);
         } else {
             holder.checkBox.setChecked(false);
@@ -72,9 +72,9 @@ class CityAdapter extends BaseAdapter {
                 int index = (int) compoundButton.getTag();
                 String city_coordinate = COORDINATE_LIST[index];
                 if (checked) {
-                    mSelectedCityList.add(city_coordinate);
+                    mSelectedCityList.set(index, city_coordinate);
                 } else {
-                    mSelectedCityList.remove(city_coordinate);
+                    mSelectedCityList.set(index, null);
                 }
                 mDTF.setValues(mSelectedCityList);
             }

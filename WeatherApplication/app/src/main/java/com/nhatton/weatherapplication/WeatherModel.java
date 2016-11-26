@@ -1,5 +1,7 @@
 package com.nhatton.weatherapplication;
 
+import android.graphics.Bitmap;
+
 import java.util.Date;
 
 class WeatherModel {
@@ -8,12 +10,13 @@ class WeatherModel {
     private String mWeatherCondition = "";
     private Date mDate;
     private String mIconUrl;
+    private Bitmap mIcon;
 
-    WeatherModel(String cityName, double tempC, String weatherCondition, String iconUrl) {
+    WeatherModel(String cityName, double tempC, String weatherCondition, Bitmap icon) {
         mCityName = cityName;
         mTempC = tempC;
         mWeatherCondition = weatherCondition;
-        mIconUrl = iconUrl;
+        mIcon = icon;
     }
 
     String getLocation() {
@@ -54,5 +57,16 @@ class WeatherModel {
 
     public void setIconUrl(String iconUrl) {
         mIconUrl = iconUrl;
+    }
+
+    Bitmap getIcon(){
+        return mIcon;
+    }
+
+    public void setIcon(Bitmap icon){
+        mIcon = icon;
+    }
+    String getValueTempC(){
+        return String.valueOf(Math.round(mTempC))+"°C";
     }
 }

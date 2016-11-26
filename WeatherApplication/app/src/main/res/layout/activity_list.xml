@@ -9,14 +9,14 @@
 
     <ListView
         android:id="@+id/city_list"
+        style="@style/Base.Widget.AppCompat.ListView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        style="@style/Base.Widget.AppCompat.ListView" />
+        android:layout_height="match_parent" />
 
     <TextView
         android:id="@android:id/empty"
-        android:text="@string/empty"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent"
+        android:text="@string/empty" />
 
 </LinearLayout>

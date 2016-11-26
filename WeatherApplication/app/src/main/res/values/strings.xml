@@ -1,6 +1,5 @@
 <resources>
-    <string name="app_name">WeatherApplication</string>
-    <string name="city_hanoi">Hà Nội</string>
+    <string name="app_name">Weather App</string>
     <string name="empty">Empty</string>
     <string name="title_list_city_activity">List of Cities</string>
     <string name="weather_icon">Weather Icon</string>
