@@ -12,14 +12,12 @@ import java.util.ArrayList;
 
 class MainAdapter extends BaseAdapter {
 
-    private Context mContext;
     private ArrayList<WeatherModel> mWeatherModelList;
     private LayoutInflater mInflater;
 
     MainAdapter(Context context, ArrayList<WeatherModel> weatherModelArrayList) {
-        mContext = context;
         mWeatherModelList = weatherModelArrayList;
-        mInflater = LayoutInflater.from(mContext);
+        mInflater = LayoutInflater.from(context);
     }
 
     @Override
@@ -40,16 +38,13 @@ class MainAdapter extends BaseAdapter {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         MainAdapter.ViewHolder holder;
-
         if (convertView == null) {
             convertView = mInflater.inflate(R.layout.main_row, parent, false);
-
             holder = new MainAdapter.ViewHolder();
             holder.cityName = (TextView) convertView.findViewById(R.id.main_city_name);
             holder.tempC = (TextView) convertView.findViewById(R.id.main_temp_c);
             holder.iconWeather = (ImageView) convertView.findViewById(R.id.main_weather_icon);
             holder.weatherCondition = (TextView) convertView.findViewById(R.id.main_weather_condition);
-
             convertView.setTag(holder);
         } else {
             holder = (MainAdapter.ViewHolder) convertView.getTag();

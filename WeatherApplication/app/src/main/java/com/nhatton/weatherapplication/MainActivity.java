@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -13,7 +14,6 @@ import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -32,10 +32,9 @@ import java.sql.Date;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Locale;
+import java.util.Objects;
 
 import static com.nhatton.weatherapplication.ListCityActivity.CITY_LIST;
 import static com.nhatton.weatherapplication.ListCityActivity.COORDINATE_LIST;
@@ -44,12 +43,14 @@ import static com.nhatton.weatherapplication.ListCityActivity.NUMBER_OF_CITY;
 public class MainActivity extends AppCompatActivity {
     public static final DateFormat df = DateFormat.getDateInstance(DateFormat.MEDIUM);
     private final static String URL_ROOT = "http://api.apixu.com/v1/current.json?key=7f05b42fa8aa4c32b4364412162211&q=";
-    private static final int GET_RESULT = 1;
-    private static final int EDIT_LIST = 2;
+    private static final int TO_EDIT_LIST = 1;
+    private final static String TAG = MainActivity.class.getSimpleName();
 
     private ProgressDialog pDialog;
     private ArrayList<String> mSelectedCityList;
+    private ArrayList<String> cloneSelectedCityList;
     private ArrayList<WeatherModel> mWeatherModelList;
+    private SwipeRefreshLayout swipeContainer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,26 +62,60 @@ public class MainActivity extends AppCompatActivity {
         String date = df.format(new Date(unixTime));
         tv.setText(date);
 
-        mSelectedCityList = new ArrayList<>();
+        swipeContainer = (SwipeRefreshLayout) findViewById(R.id.swipeContainer);
+        swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                refreshList();
+            }
+        });
+        swipeContainer.setColorSchemeResources(R.color.colorAccent);
+
         mWeatherModelList = new ArrayList<>();
+
+        ArrayList<String> temp = new ArrayList<>();
+
         try {
-            mSelectedCityList = (ArrayList<String>) readCachedFile(MainActivity.this, "selected_list");
+            temp = (ArrayList<String>) readCachedFile(MainActivity.this, "selected_list");
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
-        Collection<String> c = (Collection) mSelectedCityList;
-        if (mSelectedCityList.isEmpty() || Collections.frequency(c, null) == NUMBER_OF_CITY) {
+
+
+        if (temp == null || temp.size() == 0) {
+            mSelectedCityList = new ArrayList<>();
+            for (int i = 0; i < NUMBER_OF_CITY; i++) {
+                mSelectedCityList.add(null);
+            }
+        } else {
+            mSelectedCityList = temp;
+        }
+
+        cloneSelectedCityList = mSelectedCityList;
+        Collection<String> c = (Collection<String>) mSelectedCityList;
+        if (Collections.frequency(c, null) == NUMBER_OF_CITY) {
             Intent getList = new Intent(MainActivity.this, ListCityActivity.class);
-            startActivityForResult(getList, GET_RESULT);
-        }else{
+            startActivityForResult(getList, TO_EDIT_LIST);
+        } else {
             new GetWeatherData().execute();
         }
     }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
+    private void refreshList() {
+        mWeatherModelList = new ArrayList<>();
+        cloneSelectedCityList = mSelectedCityList;
+        new GetWeatherData().execute();
+        swipeContainer.setRefreshing(false);
+    }
 
+    @Override
+    protected void onStop() {
+        try {
+            createCachedFile(MainActivity.this, "selected_list", mSelectedCityList);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        super.onStop();
     }
 
     @Override
@@ -95,42 +130,36 @@ public class MainActivity extends AppCompatActivity {
         if (item.getItemId() == R.id.menu_edit_list) {
             Intent editList = new Intent(this, ListCityActivity.class);
             editList.putExtra("MAIN_LIST", mSelectedCityList);
-            startActivityForResult(editList, EDIT_LIST);
+            startActivityForResult(editList, TO_EDIT_LIST);
         }
         return super.onOptionsItemSelected(item);
     }
 
     @Override
-    protected void onStop() {
-        try {
-            createCachedFile(MainActivity.this, "selected_list", mSelectedCityList);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        super.onStop();
-    }
-
-    @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == GET_RESULT || requestCode == EDIT_LIST) {
-            if (resultCode == RESULT_OK) {
-                if(data.getStringArrayListExtra("RESULT_LIST")!= mSelectedCityList){
-                    mSelectedCityList = data.getStringArrayListExtra("RESULT_LIST");
-                    mWeatherModelList = new ArrayList<>();
-                    new GetWeatherData().execute();
+        if (requestCode == TO_EDIT_LIST && resultCode == RESULT_OK) {
+            ArrayList<String> resultList = data.getStringArrayListExtra("RESULT_LIST");
+            if (!resultList.equals(mSelectedCityList)) {
+                for (int i = 0; i < NUMBER_OF_CITY; i++) {
+                    if (Objects.equals(resultList.get(i), mSelectedCityList.get(i))) {
+                        if (mSelectedCityList.get(i) != null) {
+                            cloneSelectedCityList.set(i, null);
+                        }
+                    } else if (resultList.get(i) == null) {
+                        removeWeatherModel(i);
+                        cloneSelectedCityList.set(i, null);
+                    } else {
+                        cloneSelectedCityList.set(i, resultList.get(i));
+                    }
                 }
-                else{
-                    ListView listView = (ListView) findViewById(R.id.main_list);
-                    listView.setAdapter(new MainAdapter(MainActivity.this, mWeatherModelList));
-                }
+                mSelectedCityList = resultList;
+                new GetWeatherData().execute();
+            } else {
+                ListView listView = (ListView) findViewById(R.id.main_list);
+                listView.setAdapter(new MainAdapter(MainActivity.this, mWeatherModelList));
             }
         }
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
     }
 
     private class GetWeatherData extends AsyncTask<Void, Void, Void> {
@@ -150,18 +179,15 @@ public class MainActivity extends AppCompatActivity {
             HttpHandler sh = new HttpHandler();
 
             for (int i = 0; i < NUMBER_OF_CITY; i++) {
-                if (mSelectedCityList.get(i) != null) {
-                    String url = URL_ROOT + mSelectedCityList.get(i);
-
+                if (cloneSelectedCityList.get(i) != null) {
+                    String url = URL_ROOT + cloneSelectedCityList.get(i);
                     String jsonStr = sh.makeServiceCall(url);
-
-                    Log.e("MainActivity", "Response from url: " + jsonStr);
-
+                    Log.e(TAG, "Response from url: " + jsonStr);
                     if (jsonStr != null) {
                         try {
                             JSONObject weatherData = new JSONObject(jsonStr);
 
-                            String cityName = getCityName(mSelectedCityList.get(i));
+                            String cityName = getCityName(cloneSelectedCityList.get(i));
 
                             JSONObject current = weatherData.getJSONObject("current");
                             double tempC = current.getDouble("temp_c");
@@ -179,7 +205,7 @@ public class MainActivity extends AppCompatActivity {
                             }
                             mWeatherModelList.add(new WeatherModel(cityName, tempC, text, icon));
                         } catch (final JSONException e) {
-                            Log.e("MainActivity", "Json parsing error: " + e.getMessage());
+                            Log.e(TAG, "Json parsing error: " + e.getMessage());
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
@@ -192,7 +218,7 @@ public class MainActivity extends AppCompatActivity {
 
                         }
                     } else {
-                        Log.e("MainActivity", "Couldn't get json from server.");
+                        Log.e(TAG, "Couldn't get json from server.");
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
@@ -248,5 +274,13 @@ public class MainActivity extends AppCompatActivity {
 
     private String getCityName(String coordinate) {
         return Arrays.asList(CITY_LIST).get(Arrays.asList(COORDINATE_LIST).lastIndexOf(coordinate));
+    }
+
+    private void removeWeatherModel(int position) {
+        for (int i = 0; i < mWeatherModelList.size(); i++) {
+            if (Objects.equals(mWeatherModelList.get(i).getLocation(), CITY_LIST[position])) {
+                mWeatherModelList.remove(mWeatherModelList.get(i));
+            }
+        }
     }
 }

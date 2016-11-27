@@ -11,23 +11,25 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
+import java.util.concurrent.TimeoutException;
 
 class HttpHandler {
 
     private static final String TAG = HttpHandler.class.getSimpleName();
 
-    public HttpHandler() {
+    HttpHandler() {
     }
 
-    public String makeServiceCall(String reqUrl) {
+    String makeServiceCall(String reqUrl) {
         String response = null;
         try {
             URL url = new URL(reqUrl);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setConnectTimeout(5000);
             conn.setRequestMethod("GET");
             // read the response
-            InputStream in = new BufferedInputStream(conn.getInputStream());
-            response = convertStreamToString(in);
+            InputStream inputStream = new BufferedInputStream(conn.getInputStream());
+            response = convertStreamToString(inputStream);
         } catch (MalformedURLException e) {
             Log.e(TAG, "MalformedURLException: " + e.getMessage());
         } catch (ProtocolException e) {
@@ -40,24 +42,24 @@ class HttpHandler {
         return response;
     }
 
-    private String convertStreamToString(InputStream is) {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-        StringBuilder sb = new StringBuilder();
+    private String convertStreamToString(InputStream inputStream) {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+        StringBuilder stringBuilder = new StringBuilder();
 
         String line;
         try {
             while ((line = reader.readLine()) != null) {
-                sb.append(line).append('\n');
+                stringBuilder.append(line).append('\n');
             }
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
             try {
-                is.close();
+                inputStream.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
-        return sb.toString();
+        return stringBuilder.toString();
     }
 }

@@ -4,4 +4,6 @@
     <string name="title_list_city_activity">List of Cities</string>
     <string name="weather_icon">Weather Icon</string>
     <string name="edit_list">Edit list</string>
+    <string name="select_all_list">Select all</string>
+    <string name="select_none_list">Select none</string>
 </resources>

@@ -4,6 +4,7 @@
     android:id="@+id/activity_list"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:descendantFocusability="blocksDescendants"
     android:orientation="vertical"
     tools:context="com.nhatton.weatherapplication.ListCityActivity">
 
