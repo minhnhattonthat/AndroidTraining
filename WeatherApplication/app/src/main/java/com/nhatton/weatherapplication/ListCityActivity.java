@@ -3,7 +3,6 @@ package com.nhatton.weatherapplication;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -32,6 +31,7 @@ public class ListCityActivity extends AppCompatActivity {
 
     private ArrayList<String> mSelectedCityList;
     private ListView mListView;
+    private ListCityAdapter mListCityAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,7 +51,8 @@ public class ListCityActivity extends AppCompatActivity {
         }
 
         mListView = (ListView) findViewById(R.id.city_list);
-        mListView.setAdapter(new ListCityAdapter(ListCityActivity.this, mSelectedCityList));
+        mListCityAdapter = new ListCityAdapter(ListCityActivity.this, mSelectedCityList);
+        mListView.setAdapter(mListCityAdapter);
         mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long index) {
@@ -82,7 +83,7 @@ public class ListCityActivity extends AppCompatActivity {
                     CheckBox box = (CheckBox) rowView.findViewById(R.id.list_city_name);
                     box.setChecked(true);
                 }
-                mListView.setAdapter(new ListCityAdapter(ListCityActivity.this, mSelectedCityList));
+                mListCityAdapter.notifyDataSetChanged();
                 break;
             case R.id.menu_select_none_list:
                 for(int i = 0; i<NUMBER_OF_CITY; i++){
@@ -91,7 +92,7 @@ public class ListCityActivity extends AppCompatActivity {
                     CheckBox box = (CheckBox) rowView.findViewById(R.id.list_city_name);
                     box.setChecked(false);
                 }
-                mListView.setAdapter(new ListCityAdapter(ListCityActivity.this, mSelectedCityList));
+                mListCityAdapter.notifyDataSetChanged();
                 break;
         }
         return super.onOptionsItemSelected(item);
@@ -112,5 +113,4 @@ public class ListCityActivity extends AppCompatActivity {
         getMenuInflater().inflate(R.menu.menu_list, menu);
         return true;
     }
-
 }

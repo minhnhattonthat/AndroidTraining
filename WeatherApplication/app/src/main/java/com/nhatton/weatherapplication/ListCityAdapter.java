@@ -14,7 +14,6 @@ import static com.nhatton.weatherapplication.ListCityActivity.COORDINATE_LIST;
 import static com.nhatton.weatherapplication.ListCityActivity.NUMBER_OF_CITY;
 
 class ListCityAdapter extends BaseAdapter {
-
     private LayoutInflater mInflater;
     private ArrayList<String> mSelectedCityList;
 

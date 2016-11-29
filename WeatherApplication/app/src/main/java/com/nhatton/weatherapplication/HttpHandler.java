@@ -25,7 +25,6 @@ class HttpHandler {
         try {
             URL url = new URL(reqUrl);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setConnectTimeout(5000);
             conn.setRequestMethod("GET");
             // read the response
             InputStream inputStream = new BufferedInputStream(conn.getInputStream());
