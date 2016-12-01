@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">SumOfSqrt</string>
+    <string name="input_number">Input number</string>
+    <string name="calculate">Calculate</string>
+    <string name="first_try">Using 3 thread</string>
+    <string name="second_try">Using one thread</string>
+</resources>
