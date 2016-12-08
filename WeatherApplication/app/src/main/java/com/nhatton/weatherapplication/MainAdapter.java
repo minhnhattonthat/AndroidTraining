@@ -9,6 +9,10 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+
+import static com.nhatton.weatherapplication.ListCityActivity.NUMBER_OF_CITY;
 
 class MainAdapter extends BaseAdapter {
 
@@ -49,6 +53,7 @@ class MainAdapter extends BaseAdapter {
         } else {
             holder = (MainAdapter.ViewHolder) convertView.getTag();
         }
+
         WeatherModel element = mWeatherModelList.get(position);
         holder.cityName.setText(element.getLocation());
         holder.tempC.setText(element.getValueTempC());
@@ -58,7 +63,7 @@ class MainAdapter extends BaseAdapter {
         return convertView;
     }
 
-    private class ViewHolder {
+    private static class ViewHolder {
         TextView cityName;
         TextView tempC;
         ImageView iconWeather;

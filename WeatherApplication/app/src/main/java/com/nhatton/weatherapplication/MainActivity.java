@@ -2,8 +2,10 @@ package com.nhatton.weatherapplication;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Handler;
-import android.os.Message;
+import android.os.HandlerThread;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -22,45 +24,70 @@ import org.json.JSONObject;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.URL;
 import java.sql.Date;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Locale;
 import java.util.Objects;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.PriorityBlockingQueue;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import static com.nhatton.weatherapplication.ListCityActivity.CITY_LIST;
 import static com.nhatton.weatherapplication.ListCityActivity.COORDINATE_LIST;
 import static com.nhatton.weatherapplication.ListCityActivity.NUMBER_OF_CITY;
+import static java.lang.System.currentTimeMillis;
 
 public class MainActivity extends AppCompatActivity {
     public static final DateFormat df = DateFormat.getDateInstance(DateFormat.MEDIUM);
-    private final static String URL_ROOT = "http://api.apixu.com/v1/current.json?key=7f05b42fa8aa4c32b4364412162211&q=";
+
     private static final int TO_EDIT_LIST = 1;
-    private final static String TAG = MainActivity.class.getSimpleName();
-    private static final int TASK_COMPLETE = 3;
+
+    private static final String TAG = MainActivity.class.getSimpleName();
+    private static final String URL_ROOT =
+            "http://api.apixu.com/v1/current.json?key=4b89914e6f7d4a419d9171942160712&q=";
+
     private HttpHandler sh = new HttpHandler();
+
+    private BlockingQueue workQueue = new ArrayBlockingQueue(30);
+    private ThreadPoolExecutor threadPoolExecutor;
+    private Thread[] fetchDataAt = new Thread[30];
+
+    private Handler handler = new Handler();
 
     private ArrayList<String> mSelectedCityList;
     private ArrayList<String> cloneSelectedCityList;
     private ArrayList<WeatherModel> mWeatherModelList;
+
     private SwipeRefreshLayout swipeContainer;
+
     private ListView mListView;
     private MainAdapter mMainAdapter;
+
+    private long startTime;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        //Set time of today
         TextView tv = (TextView) findViewById(R.id.main_today);
         long unixTime = System.currentTimeMillis();
         String date = df.format(new Date(unixTime));
         tv.setText(date);
 
+        //Set swipe to refresh list
         swipeContainer = (SwipeRefreshLayout) findViewById(R.id.swipeContainer);
         swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
@@ -70,10 +97,11 @@ public class MainActivity extends AppCompatActivity {
         });
         swipeContainer.setColorSchemeResources(R.color.colorAccent);
 
+        //Set mWeatherModelList with 30 null items
         mWeatherModelList = new ArrayList<>();
 
+        //Recall cache of mSelectedCityList. If null or have no items, set list of 30 null items
         ArrayList<String> temp = new ArrayList<>();
-
         try {
             temp = (ArrayList<String>) readCachedFile(MainActivity.this, "selected_list");
         } catch (IOException | ClassNotFoundException e) {
@@ -87,7 +115,11 @@ public class MainActivity extends AppCompatActivity {
         } else {
             mSelectedCityList = temp;
         }
+
+        //Create a clone of mSelectedCityList to add checked items and remove unchecked items
         cloneSelectedCityList = mSelectedCityList;
+
+        //If mSelectedCityList don't have any item, go to list to choose, else get data
         Collection<String> c = mSelectedCityList;
         if (Collections.frequency(c, null) == NUMBER_OF_CITY) {
             Intent getList = new Intent(MainActivity.this, ListCityActivity.class);
@@ -96,76 +128,66 @@ public class MainActivity extends AppCompatActivity {
             mListView = (ListView) findViewById(R.id.main_list);
             mMainAdapter = new MainAdapter(MainActivity.this, mWeatherModelList);
             mListView.setAdapter(mMainAdapter);
-            new Thread(new GetAllData()).start();
+            fetchData();
         }
     }
 
-    class GetAllData implements Runnable {
+    private void fetchData() {
 
-        @Override
-        public void run() {
-            android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
-            for (int i = 0; i < NUMBER_OF_CITY; i++) {
-                if (parseToWeatherModel(i) != null) {
-                    mWeatherModelList.add(parseToWeatherModel(i));
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            mMainAdapter.notifyDataSetChanged();
-                        }
-                    });
-                }
-            }
-        }
+        Log.i("START30", getTime(currentTimeMillis()));
+        threadPoolExecutor = new ThreadPoolExecutor(11, 30, 1, TimeUnit.SECONDS, workQueue);
 
-        WeatherModel parseToWeatherModel(int i) {
-            if (cloneSelectedCityList.get(i) != null) {
-                String url = URL_ROOT + cloneSelectedCityList.get(i);
-                String jsonStr = sh.makeServiceCall(url);
-                Log.e(TAG, "Response from url: " + jsonStr);
-                if (jsonStr != null) {
-                    try {
-                        JSONObject weatherData = new JSONObject(jsonStr);
+        for (int i = 0; i < NUMBER_OF_CITY; i++) {
+            final int position = i;
+            fetchDataAt[i] = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    if (cloneSelectedCityList.get(position) != null) {
+                        String url = URL_ROOT + cloneSelectedCityList.get(position);
+                        String jsonStr = sh.makeServiceCall(url);
+                        Log.e(TAG, "Response from url: " + jsonStr);
+                        if (jsonStr != null) {
+                            try {
+                                JSONObject weatherData = new JSONObject(jsonStr);
 
-                        String cityName = getCityName(cloneSelectedCityList.get(i));
+                                String cityName = getCityName(cloneSelectedCityList.get(position));
 
-                        JSONObject current = weatherData.getJSONObject("current");
-                        double tempC = current.getDouble("temp_c");
+                                JSONObject current = weatherData.getJSONObject("current");
+                                double tempC = current.getDouble("temp_c");
 
-                        JSONObject condition = current.getJSONObject("condition");
-                        String text = condition.getString("text");
+                                JSONObject condition = current.getJSONObject("condition");
+                                String text = condition.getString("text");
 
-                        return new WeatherModel(cityName, tempC, text);
-                    } catch (final JSONException e) {
-                        Log.e(TAG, "Json parsing error: " + e.getMessage());
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                Toast.makeText(getApplicationContext(), "Json parsing error: " + e.getMessage(),
-                                        Toast.LENGTH_LONG).show();
+                                mWeatherModelList.add( new WeatherModel(cityName, tempC, text));
+                                handler.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        mMainAdapter.notifyDataSetChanged();
+                                    }
+                                });
+                            } catch (final JSONException e) {
+                                Log.e(TAG, "Json parsing error: " + e.getMessage());
+                                handler.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        Toast.makeText(getApplicationContext(), "Json parsing error: "
+                                                + e.getMessage(), Toast.LENGTH_LONG).show();
+                                    }
+                                });
                             }
-                        });
-                    }
-                } else {
-                    Log.e(TAG, "Couldn't get json from server.");
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Toast.makeText(getApplicationContext(),
-                                    "Couldn't get json from server. Check LogCat for possible errors!",
-                                    Toast.LENGTH_LONG).show();
+                        } else {
+                            Log.e(TAG, "Couldn't get json from server.");
                         }
-                    });
+                    }
                 }
-            }
-            return null;
+            });
+            threadPoolExecutor.execute(fetchDataAt[i]);
         }
     }
 
     private void refreshList() {
-        mWeatherModelList = new ArrayList<>();
         cloneSelectedCityList = mSelectedCityList;
-        new Thread(new GetAllData()).start();//TODO: switch to thread
+        fetchData();//TODO: switch to thread
         swipeContainer.setRefreshing(false);
     }
 
@@ -177,6 +199,17 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
         super.onStop();
+        if (threadPoolExecutor != null) {
+            threadPoolExecutor.shutdown();
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (threadPoolExecutor != null) {
+            threadPoolExecutor.shutdown();
+        }
     }
 
     @Override
@@ -188,6 +221,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.menu_edit_list) {
+            if (threadPoolExecutor != null) {
+                threadPoolExecutor.shutdown();
+            }
             Intent editList = new Intent(this, ListCityActivity.class);
             editList.putExtra("MAIN_LIST", mSelectedCityList);
             startActivityForResult(editList, TO_EDIT_LIST);
@@ -201,6 +237,7 @@ public class MainActivity extends AppCompatActivity {
         mListView = (ListView) findViewById(R.id.main_list);
         mMainAdapter = new MainAdapter(MainActivity.this, mWeatherModelList);
         mListView.setAdapter(mMainAdapter);
+        //Compare between the list before and after activity for result
         if (requestCode == TO_EDIT_LIST && resultCode == RESULT_OK) {
             ArrayList<String> resultList = data.getStringArrayListExtra("RESULT_LIST");
             if (!resultList.equals(mSelectedCityList)) {
@@ -210,19 +247,19 @@ public class MainActivity extends AppCompatActivity {
                             cloneSelectedCityList.set(i, null);
                         }
                     } else if (resultList.get(i) == null) {
-                        removeWeatherModel(i);
-                        mMainAdapter.notifyDataSetChanged();
                         cloneSelectedCityList.set(i, null);
+                        removeWeatherModel(i);
                     } else {
                         cloneSelectedCityList.set(i, resultList.get(i));
                     }
                 }
                 mSelectedCityList = resultList;
-                new Thread(new GetAllData()).start();//TODO: change  to using thread
+                fetchData();
             } else {
                 mMainAdapter.notifyDataSetChanged();
             }
         }
+
     }
 
     @Override
@@ -235,7 +272,8 @@ public class MainActivity extends AppCompatActivity {
         return super.onContextItemSelected(item);
     }
 
-    private static void createCachedFile(Context context, String fileName, ArrayList<String> content) throws IOException {
+    private static void createCachedFile(Context context, String fileName, ArrayList<String> content)
+            throws IOException {
         FileOutputStream fos = context.openFileOutput(fileName, Context.MODE_PRIVATE);
         ObjectOutputStream oos = new ObjectOutputStream(fos);
         oos.writeObject(content);
@@ -243,7 +281,8 @@ public class MainActivity extends AppCompatActivity {
         fos.close();
     }
 
-    public static Object readCachedFile(Context context, String fileName) throws IOException, ClassNotFoundException {
+    private static Object readCachedFile(Context context, String fileName)
+            throws IOException, ClassNotFoundException {
         FileInputStream fis = context.openFileInput(fileName);
         ObjectInputStream ois = new ObjectInputStream(fis);
         return ois.readObject();
@@ -255,9 +294,22 @@ public class MainActivity extends AppCompatActivity {
 
     private void removeWeatherModel(int position) {
         for (int i = 0; i < mWeatherModelList.size(); i++) {
-            if (Objects.equals(mWeatherModelList.get(i).getLocation(), CITY_LIST[position])) {
+            if (Objects.equals(mWeatherModelList.get(i).getLocation(), CITY_LIST[position])) {//TODO: fix removing
                 mWeatherModelList.remove(mWeatherModelList.get(i));
             }
         }
+    }
+
+    private String getTime(long millis) {
+        return String.format(Locale.getDefault(), "%d:%d.%d",
+                TimeUnit.MILLISECONDS.toMinutes(millis) -
+                        TimeUnit.HOURS.toMinutes
+                                (TimeUnit.MILLISECONDS.toHours(millis)),
+                TimeUnit.MILLISECONDS.toSeconds(millis) -
+                        TimeUnit.MINUTES.toSeconds
+                                (TimeUnit.MILLISECONDS.toMinutes(millis)),
+                TimeUnit.MILLISECONDS.toMillis(millis) -
+                        TimeUnit.SECONDS.toMillis
+                                (TimeUnit.MILLISECONDS.toSeconds(millis)));
     }
 }

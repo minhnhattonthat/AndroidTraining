@@ -58,7 +58,7 @@ class ListCityAdapter extends BaseAdapter {
         return convertView;
     }
 
-    private class ViewHolder {
+    private static class ViewHolder {
         CheckBox checkBox;
     }
 }
