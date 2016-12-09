@@ -76,24 +76,18 @@ class SoundDbHelper {
     }
 
     long createSound(String description) {
-        long result;
         if (checkExist(description)) {
-            Cursor c = mDb.query(DATABASE_TABLE, new String[]{KEY_ROWID, KEY_DESCRIPTION},
-                    KEY_DESCRIPTION + "=" + description, null, null, null, null);
-            c.moveToFirst();
-            result = c.getLong(c.getColumnIndex(KEY_ROWID));
-            c.close();
+            return -1;
         } else {
             ContentValues initialValues = new ContentValues();
             initialValues.put(KEY_DESCRIPTION, description);
-            result = mDb.insert(DATABASE_TABLE, null, initialValues);
+            return mDb.insert(DATABASE_TABLE, null, initialValues);
         }
-        return result;
     }
 
     private boolean checkExist(String description) {
         Cursor c = mDb.query(DATABASE_TABLE, new String[]{KEY_ROWID, KEY_DESCRIPTION},
-                KEY_DESCRIPTION + "=?", new String[]{description}, null, null, null);
+                KEY_DESCRIPTION + "=" + "'" + description + "'", null, null, null, null);
         int count = c.getCount();
         c.close();
         return (count > 0);

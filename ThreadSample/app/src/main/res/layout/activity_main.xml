@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.nhatton.threadsample.MainActivity">
+
+    <LinearLayout
+        android:id="@+id/activity_main"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingLeft="@dimen/activity_horizontal_margin"
+        android:paddingRight="@dimen/activity_horizontal_margin"
+        android:paddingTop="@dimen/activity_vertical_margin">
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <ImageView
+                android:id="@+id/image_view_1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@android:drawable/picture_frame"
+                android:contentDescription="@string/image1"
+                android:minHeight="80dp"
+                android:minWidth="80dp" />
+
+            <ProgressBar
+                android:layout_centerInParent="true"
+                android:id="@+id/progress_bar_1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minHeight="20dp"
+                android:minWidth="20dp"/>
+        </RelativeLayout>
+
+        <ImageView
+            android:id="@+id/image_view_2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@android:drawable/picture_frame"
+            android:contentDescription="@string/image2"
+            android:minHeight="40dp"
+            android:minWidth="40dp" />
+
+        <ImageView
+            android:id="@+id/image_view_3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@android:drawable/picture_frame"
+            android:contentDescription="@string/image3"
+            android:minHeight="40dp"
+            android:minWidth="40dp" />
+
+        <ImageView
+            android:id="@+id/image_view_4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@android:drawable/picture_frame"
+            android:contentDescription="@string/image4"
+            android:minHeight="40dp"
+            android:minWidth="40dp" />
+    </LinearLayout>
+</ScrollView>

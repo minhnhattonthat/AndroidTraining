@@ -201,8 +201,6 @@ public class TTSActivity extends AppCompatActivity implements TextToSpeech.OnIni
             String description = txtText.getText().toString();
             long t = mDbHelper.createSound(description);
             if (t < 0) {
-                Log.e("TTS", "Save failed");
-            } else if (t < mDbHelper.fetchAllSounds().getCount()) {
                 Toast.makeText(this, R.string.toast_exist, Toast.LENGTH_SHORT).show();
             } else {
                 Toast.makeText(this, R.string.toast_saved, Toast.LENGTH_SHORT).show();

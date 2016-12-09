@@ -35,7 +35,6 @@ public class CollectionActivity extends ListActivity{
         c.moveToPosition(position);
         String description = c.getString(c.getColumnIndexOrThrow(SoundDbHelper.KEY_DESCRIPTION));
         tts.speak(description, TextToSpeech.QUEUE_FLUSH, null, null);
-
     }
 
     @Override

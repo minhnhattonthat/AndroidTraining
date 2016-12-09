@@ -16,7 +16,7 @@ public class CalculateManager {
     private static final int MAXIMUM_POOL_SIZE = 8;
     private static int NUMBER_OF_CORES = Runtime.getRuntime().availableProcessors();
     private static CalculateManager sInstance;
-
+    private long blockSize;
 
     static{
 
