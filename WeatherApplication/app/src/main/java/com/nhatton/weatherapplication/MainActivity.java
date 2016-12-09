@@ -133,9 +133,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void fetchData() {
-
-        Log.i("START30", getTime(currentTimeMillis()));
-        threadPoolExecutor = new ThreadPoolExecutor(11, 30, 1, TimeUnit.SECONDS, workQueue);
+        final long startTime = currentTimeMillis();
+        threadPoolExecutor = new ThreadPoolExecutor(30, 30, 1, TimeUnit.SECONDS, workQueue);
 
         for (int i = 0; i < NUMBER_OF_CITY; i++) {
             final int position = i;
@@ -158,7 +157,7 @@ public class MainActivity extends AppCompatActivity {
                                 JSONObject condition = current.getJSONObject("condition");
                                 String text = condition.getString("text");
 
-                                mWeatherModelList.add( new WeatherModel(cityName, tempC, text));
+                                mWeatherModelList.add(new WeatherModel(cityName, tempC, text));
                                 handler.post(new Runnable() {
                                     @Override
                                     public void run() {
@@ -175,6 +174,7 @@ public class MainActivity extends AppCompatActivity {
                                     }
                                 });
                             }
+                            Log.i("FINISH THREAD " + String.valueOf(position), getTime(currentTimeMillis() - startTime));
                         } else {
                             Log.e(TAG, "Couldn't get json from server.");
                         }
