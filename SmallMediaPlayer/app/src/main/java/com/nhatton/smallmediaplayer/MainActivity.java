@@ -39,7 +39,8 @@ public class MainActivity extends AppCompatActivity {
     private FilenameFilter songFilter = new FilenameFilter() {
         @Override
         public boolean accept(File file, String s) {
-            return (s.endsWith(".mp3") || s.endsWith(".MP3") || s.endsWith(".wav") || s.endsWith(".WAV"));
+            return (s.endsWith(".mp3") || s.endsWith(".MP3") || s.endsWith(".wav")
+                    || s.endsWith(".WAV"));
         }
     };
 
@@ -64,7 +65,8 @@ public class MainActivity extends AppCompatActivity {
         listView.setOnItemClickListener(selectSongListener);
     }
 
-    private AdapterView.OnItemClickListener selectSongListener = new AdapterView.OnItemClickListener() {
+    private AdapterView.OnItemClickListener selectSongListener =
+            new AdapterView.OnItemClickListener() {
         @Override
         public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
             listView.setItemChecked(position, true);
@@ -92,7 +94,6 @@ public class MainActivity extends AppCompatActivity {
             invalidateOptionsMenu();
         }
     };
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -128,11 +129,46 @@ public class MainActivity extends AppCompatActivity {
                     mMediaPlayer.start();
                     playButton.setIcon(getDrawable(android.R.drawable.ic_media_pause));
                 }
+                break;
+            case R.id.button_next:
+                mMediaPlayer.reset();
+                listView.setItemChecked(LAST_SONG_POSITION, false);
+                LAST_SONG_POSITION++;
+                songPath = songList.get(LAST_SONG_POSITION).get("songPath");
+                try {
+                    mMediaPlayer.setDataSource(songPath);
+                    mMediaPlayer.prepare();
+                    mMediaPlayer.start();
+                    playButton.setIcon(getDrawable(android.R.drawable.ic_media_pause));
+                    listView.setItemChecked(LAST_SONG_POSITION, true);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                break;
+            case R.id.button_previous:
+                mMediaPlayer.reset();
+                if(LAST_SONG_POSITION < 0){
+                    LAST_SONG_POSITION = 0;
+                }else{
+                    listView.setItemChecked(LAST_SONG_POSITION, false);
+                    LAST_SONG_POSITION--;
+                }
+                songPath = songList.get(LAST_SONG_POSITION).get("songPath");
+                try {
+                    mMediaPlayer.setDataSource(songPath);
+                    mMediaPlayer.prepare();
+                    mMediaPlayer.start();
+                    playButton.setIcon(getDrawable(android.R.drawable.ic_media_pause));
+                    listView.setItemChecked(LAST_SONG_POSITION, true);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
                 return true;
-            default:
-                return super.onOptionsItemSelected(item);
         }
+        return super.onOptionsItemSelected(item);
     }
+
 
     private ArrayList<HashMap<String, String>> getSongList() {
         File directory = new File(MEDIA_PATH);
