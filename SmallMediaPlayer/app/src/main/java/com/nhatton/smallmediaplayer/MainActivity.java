@@ -2,6 +2,7 @@ package com.nhatton.smallmediaplayer;
 
 import android.media.MediaPlayer;
 import android.os.Environment;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
@@ -10,7 +11,9 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.SeekBar;
 import android.widget.SimpleAdapter;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
@@ -18,21 +21,24 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 import static android.os.Environment.DIRECTORY_MUSIC;
 
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MediaPlayer";
-    private final String MEDIA_PATH = Environment.
+    private static final String MEDIA_PATH = Environment.
             getExternalStoragePublicDirectory(DIRECTORY_MUSIC).getAbsolutePath();
     private int LAST_SONG_POSITION = -1;
-
     private MediaPlayer mMediaPlayer;
     private MenuItem playButton;
-    private String songPath = "";
-    private int CURRENT_TIME_PLAYED = 0;
+    private SeekBar seekBar;
+    private TextView currentTime;
+    private TextView endTime;
+    private String mSongPath = "";
     private ListView listView;
 
     private ArrayList<HashMap<String, String>> songList = new ArrayList<>();
@@ -44,6 +50,8 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+    private Handler musicHandler = new Handler();
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -53,8 +61,6 @@ public class MainActivity extends AppCompatActivity {
         Toolbar mToolBar = (Toolbar) findViewById(R.id.my_toolbar);
         setSupportActionBar(mToolBar);
 
-        mMediaPlayer = new MediaPlayer();
-
         songList = getSongList();
 
         listView = (ListView) findViewById(R.id.list_music);
@@ -63,37 +69,67 @@ public class MainActivity extends AppCompatActivity {
         listView.setTextFilterEnabled(true);
         listView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
         listView.setOnItemClickListener(selectSongListener);
+
+        mMediaPlayer = new MediaPlayer();
+        mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mediaPlayer) {
+                LAST_SONG_POSITION++;
+                mSongPath = songList.get(LAST_SONG_POSITION).get("songPath");
+                playAudio(mSongPath);
+            }
+        });
+
+        currentTime = (TextView) findViewById(R.id.start_time);
+        currentTime.setText(R.string.default_start_time);
+        endTime = (TextView) findViewById(R.id.end_time);
+        endTime.setText(R.string.default_end_time);
+
+        seekBar = (SeekBar) findViewById(R.id.seek_bar);
+        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (LAST_SONG_POSITION >= 0 && fromUser) {
+                    currentTime.setText(getTextFromDuration(progress * 1000));
+                }
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+                mMediaPlayer.pause();
+                musicHandler.removeCallbacks(mUpdateTimeTask);
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                musicHandler.removeCallbacks(mUpdateTimeTask);
+                mMediaPlayer.seekTo(seekBar.getProgress() * 1000);
+                mMediaPlayer.start();
+                updateProgressBar();
+            }
+        });
+
     }
 
     private AdapterView.OnItemClickListener selectSongListener =
             new AdapterView.OnItemClickListener() {
-        @Override
-        public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
-            listView.setItemChecked(position, true);
-            songPath = songList.get(position).get("songPath");
+                @Override
+                public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
+                    listView.setItemChecked(position, true);
+                    mSongPath = songList.get(position).get("songPath");
 
-            if(LAST_SONG_POSITION != position) {
-                mMediaPlayer.stop();
-                mMediaPlayer.reset();
-                try {
-                    mMediaPlayer.setDataSource(songPath);
-                    mMediaPlayer.prepare();
-                    mMediaPlayer.start();
-
-                } catch (IOException e) {
-                    e.printStackTrace();
+                    if (LAST_SONG_POSITION != position) {
+                        mMediaPlayer.stop();
+                        LAST_SONG_POSITION = position;
+                        playAudio(mSongPath);
+                    } else if (mMediaPlayer.isPlaying()) {
+                        mMediaPlayer.pause();
+                    } else {
+                        mMediaPlayer.start();
+                    }
+                    invalidateOptionsMenu();
                 }
-                LAST_SONG_POSITION = position;
-            }else if(mMediaPlayer.isPlaying()){
-                mMediaPlayer.pause();
-                CURRENT_TIME_PLAYED = mMediaPlayer.getCurrentPosition();
-            }else{
-                mMediaPlayer.seekTo(CURRENT_TIME_PLAYED);
-                mMediaPlayer.start();
-            }
-            invalidateOptionsMenu();
-        }
-    };
+            };
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -106,9 +142,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
         playButton = menu.findItem(R.id.button_play);
-        if(mMediaPlayer.isPlaying()){
+        if (mMediaPlayer.isPlaying()) {
             playButton.setIcon(getDrawable(android.R.drawable.ic_media_pause));
-        }else{
+        } else {
             playButton.setIcon(getDrawable(android.R.drawable.ic_media_play));
         }
         return super.onPrepareOptionsMenu(menu);
@@ -118,51 +154,31 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.button_play:
-                if (Objects.equals(songPath, "")) {
+                if (Objects.equals(mSongPath, "")) {
                     Toast.makeText(this, "Please choose a song", Toast.LENGTH_LONG).show();
                 } else if (mMediaPlayer.isPlaying()) {
                     mMediaPlayer.pause();
-                    CURRENT_TIME_PLAYED = mMediaPlayer.getCurrentPosition();
                     playButton.setIcon(getDrawable(android.R.drawable.ic_media_play));
                 } else {
-                    mMediaPlayer.seekTo(CURRENT_TIME_PLAYED);
                     mMediaPlayer.start();
                     playButton.setIcon(getDrawable(android.R.drawable.ic_media_pause));
                 }
                 break;
             case R.id.button_next:
-                mMediaPlayer.reset();
                 listView.setItemChecked(LAST_SONG_POSITION, false);
                 LAST_SONG_POSITION++;
-                songPath = songList.get(LAST_SONG_POSITION).get("songPath");
-                try {
-                    mMediaPlayer.setDataSource(songPath);
-                    mMediaPlayer.prepare();
-                    mMediaPlayer.start();
-                    playButton.setIcon(getDrawable(android.R.drawable.ic_media_pause));
-                    listView.setItemChecked(LAST_SONG_POSITION, true);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                mSongPath = songList.get(LAST_SONG_POSITION).get("songPath");
+                playAudio(mSongPath);
                 break;
             case R.id.button_previous:
-                mMediaPlayer.reset();
-                if(LAST_SONG_POSITION < 0){
+                if (LAST_SONG_POSITION < 0) {
                     LAST_SONG_POSITION = 0;
-                }else{
+                } else {
                     listView.setItemChecked(LAST_SONG_POSITION, false);
                     LAST_SONG_POSITION--;
                 }
-                songPath = songList.get(LAST_SONG_POSITION).get("songPath");
-                try {
-                    mMediaPlayer.setDataSource(songPath);
-                    mMediaPlayer.prepare();
-                    mMediaPlayer.start();
-                    playButton.setIcon(getDrawable(android.R.drawable.ic_media_pause));
-                    listView.setItemChecked(LAST_SONG_POSITION, true);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                mSongPath = songList.get(LAST_SONG_POSITION).get("songPath");
+                playAudio(mSongPath);
 
                 return true;
         }
@@ -185,14 +201,57 @@ public class MainActivity extends AppCompatActivity {
         return songList;
     }
 
+    private boolean playAudio(String songPath) {
+        try {
+            mMediaPlayer.reset();
+            mMediaPlayer.setDataSource(songPath);
+            mMediaPlayer.prepare();
+            endTime.setText(getTextFromDuration(mMediaPlayer.getDuration()));
+            mMediaPlayer.start();
+            playButton.setIcon(getDrawable(android.R.drawable.ic_media_pause));
+            listView.setItemChecked(LAST_SONG_POSITION, true);
+            seekBar.setProgress(0);
+            seekBar.setMax(mMediaPlayer.getDuration() / 1000);
+            updateProgressBar();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return true;
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        // TODO Auto-generated method stub
-        if (mMediaPlayer != null) {
-            mMediaPlayer.release();
-            mMediaPlayer = null;
-        }
+        musicHandler.removeCallbacks(mUpdateTimeTask);
 
+        if (mMediaPlayer != null) {
+            if (mMediaPlayer.isPlaying()) mMediaPlayer.stop();
+            mMediaPlayer.release();
+        }
+    }
+
+    public void updateProgressBar() {
+        if (mMediaPlayer.isPlaying()) {
+            musicHandler.postDelayed(mUpdateTimeTask, 100);
+        }
+    }
+
+    private Runnable mUpdateTimeTask = new Runnable() {
+        public void run() {
+            if (mMediaPlayer.isPlaying()) {
+                int currentPosition = mMediaPlayer.getCurrentPosition();
+                currentTime.setText(getTextFromDuration(currentPosition));
+                seekBar.setProgress(mMediaPlayer.getCurrentPosition() / 1000);
+                musicHandler.postDelayed(this, 100);
+            }
+        }
+    };
+
+    private String getTextFromDuration(int millis) {
+
+        return String.format(Locale.getDefault(), "%02d:%02d", TimeUnit.MILLISECONDS.toMinutes(millis) -
+                        TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(millis)),
+                TimeUnit.MILLISECONDS.toSeconds(millis) - TimeUnit.MINUTES.toSeconds
+                        (TimeUnit.MILLISECONDS.toMinutes(millis)));
     }
 }
