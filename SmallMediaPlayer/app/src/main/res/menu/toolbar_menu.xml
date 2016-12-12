@@ -4,6 +4,12 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.nhatton.smallmediaplayer.MainActivity">
     <item
+        android:id="@+id/directory_change"
+        android:title="@string/change_directory"
+        android:actionLayout="@layout/support_simple_spinner_dropdown_item"
+
+        app:showAsAction="always"/>
+    <item
         android:id="@+id/button_previous"
         android:icon="@android:drawable/ic_media_previous"
         android:title="@string/button_previous"

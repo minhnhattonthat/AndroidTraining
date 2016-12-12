@@ -33,6 +33,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:padding="12dp"
+            android:text="@string/default_start_time"
             android:textColor="@color/colorWhite" />
 
         <SeekBar
@@ -48,6 +49,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:padding="12dp"
+            android:text="@string/default_end_time"
             android:textColor="@color/colorWhite" />
     </LinearLayout>
 
@@ -55,7 +57,9 @@
         android:id="@+id/list_music"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/seek_bar_panel" />
+        android:layout_below="@id/seek_bar_panel"
+        android:choiceMode="singleChoice"
+        android:textFilterEnabled="true"/>
 
 </RelativeLayout>
 
