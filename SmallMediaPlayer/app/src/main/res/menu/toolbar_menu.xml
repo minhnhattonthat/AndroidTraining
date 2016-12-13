@@ -5,27 +5,31 @@
     tools:context="com.nhatton.smallmediaplayer.MainActivity">
     <item
         android:id="@+id/directory_change"
-        android:title="@string/change_directory"
         android:actionLayout="@layout/support_simple_spinner_dropdown_item"
-
-        app:showAsAction="always"/>
+        android:title="@string/change_directory"
+        app:showAsAction="always" />
     <item
         android:id="@+id/button_previous"
         android:icon="@android:drawable/ic_media_previous"
         android:title="@string/button_previous"
-        app:showAsAction="always"/>
+        app:showAsAction="always" />
     <item
         android:id="@+id/button_play"
         android:icon="@android:drawable/ic_media_play"
         android:title="@string/button_play"
-        app:showAsAction="always"/>
+        app:showAsAction="always" />
     <item
         android:id="@+id/button_next"
         android:icon="@android:drawable/ic_media_next"
         android:title="@string/button_next"
-        app:showAsAction="always"/>
+        app:showAsAction="always" />
     <item
         android:id="@+id/action_settings"
         android:title="@string/action_settings"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_shuffle"
+        android:checkable="true"
+        android:title="@string/action_shuffle"
         app:showAsAction="never" />
 </menu>

@@ -11,7 +11,7 @@
     <android.support.v7.widget.Toolbar
         android:id="@+id/my_toolbar"
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
+        android:layout_height="56dp"
         android:background="?attr/colorPrimary"
         android:elevation="4dp"
         android:theme="@style/ActionBarNoTitle"
@@ -53,13 +53,21 @@
             android:textColor="@color/colorWhite" />
     </LinearLayout>
 
+    <TextSwitcher
+        android:id="@+id/song_title_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/seek_bar_panel"
+        android:background="?attr/colorPrimary"
+        android:minHeight="30dp" />
+
     <ListView
         android:id="@+id/list_music"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/seek_bar_panel"
+        android:layout_below="@id/song_title_bar"
         android:choiceMode="singleChoice"
-        android:textFilterEnabled="true"/>
+        android:textFilterEnabled="true" />
 
 </RelativeLayout>
 
