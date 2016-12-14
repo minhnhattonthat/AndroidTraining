@@ -55,7 +55,8 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final String URL_ROOT =
-            "http://api.apixu.com/v1/current.json?key=4b89914e6f7d4a419d9171942160712&q=";
+            "http://api.apixu.com/v1/current.json?key=880f16ebddb0426498065011161412&q=";
+    private static final int NUMBER_OF_CORE_THREAD = 30;
 
     private HttpHandler sh = new HttpHandler();
 
@@ -73,8 +74,6 @@ public class MainActivity extends AppCompatActivity {
 
     private ListView mListView;
     private MainAdapter mMainAdapter;
-
-    private long startTime;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -134,7 +133,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void fetchData() {
         final long startTime = currentTimeMillis();
-        threadPoolExecutor = new ThreadPoolExecutor(30, 30, 1, TimeUnit.SECONDS, workQueue);
+        threadPoolExecutor = new ThreadPoolExecutor(NUMBER_OF_CORE_THREAD, 30, 1, TimeUnit.SECONDS, workQueue);
 
         for (int i = 0; i < NUMBER_OF_CITY; i++) {
             final int position = i;
@@ -174,7 +173,8 @@ public class MainActivity extends AppCompatActivity {
                                     }
                                 });
                             }
-                            Log.i("FINISH THREAD " + String.valueOf(position), getTime(currentTimeMillis() - startTime));
+                            Log.i(String.valueOf(NUMBER_OF_CORE_THREAD)+": FINISH THREAD " + String.valueOf(position),
+                                    String.valueOf(currentTimeMillis() - startTime));
                         } else {
                             Log.e(TAG, "Couldn't get json from server.");
                         }
